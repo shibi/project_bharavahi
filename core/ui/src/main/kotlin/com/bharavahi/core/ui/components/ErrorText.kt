@@ -12,6 +12,8 @@ fun Throwable.messageRes(): Int = when (this) {
     is DomainException.EmailAlreadyInUse -> R.string.core_error_email_in_use
     is DomainException.NotFound -> R.string.core_error_not_found
     is DomainException.ConfirmationMismatch -> R.string.core_error_confirmation_mismatch
+    is DomainException.ScheduleLocked -> R.string.core_error_schedule_locked
+    is DomainException.MemberHasPayments -> R.string.core_error_member_has_payments
     is DomainException.Network -> R.string.core_error_network
     is DomainException.Validation -> R.string.core_error_validation
     else -> R.string.core_error_unknown
@@ -23,4 +25,9 @@ fun ValidationError.messageRes(): Int = when (this) {
     ValidationError.INVALID_EMAIL -> R.string.core_validation_invalid_email
     ValidationError.INVALID_PHONE -> R.string.core_validation_invalid_phone
     ValidationError.PASSWORD_TOO_SHORT -> R.string.core_validation_password_short
+    ValidationError.INVALID_AMOUNT -> R.string.core_validation_invalid_amount
+    ValidationError.INVALID_COUNT -> R.string.core_validation_invalid_count
+    ValidationError.END_BEFORE_START -> R.string.core_validation_end_before_start
+    ValidationError.DUPLICATE -> R.string.core_validation_duplicate
+    ValidationError.AMOUNT_TOO_SMALL -> R.string.core_validation_amount_too_small
 }

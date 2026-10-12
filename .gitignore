@@ -9,3 +9,4 @@ build/
 .cxx
 # Firebase config is per developer / per Firebase project
 app-superadmin/google-services.json
+app-org/google-services.json

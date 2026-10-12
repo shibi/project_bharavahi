@@ -322,7 +322,7 @@ Joseph - 1250
 | ID | Rule |
 | --- | --- |
 | BR-1 | **Amount per due** = floor(amountPerMember / numberOfDues) rounded down to whole rupees; the remainder is added to the **last** due. ₹3,000 / 6 → 6 × ₹500. ₹1,000 / 3 → ₹333, ₹333, ₹334. |
-| BR-2 | **Due dates**: if start→end spans whole months and months ÷ numberOfDues is a whole number, due *i* = startDate + i × (months / N) months (same day of month, clamped to month end). Otherwise split the day span evenly: due *i* = startDate + floor(i × days / N). First due (i = 0) is on the start date. |
+| BR-2 | **Due dates**: if start→end spans whole months and months ÷ numberOfDues is a whole number, due *i* = startDate + i × (months / N) months (same day of month, clamped to month end). Otherwise split the day span evenly: due *i* = startDate + floor(i × days / N). First due (i = 0) is on the start date. An end date one day short of a whole month (1 Jan to 31 Dec) also counts as whole months. |
 | BR-3 | **Due label**: `Due {i+1} of {N}, {MMM yyyy}` of its due date. |
 | BR-4 | The schedule total is **per member**. Every event member owes `amountPerMember` for each schedule. |
 | BR-5 | **Current due** = the latest due whose due date ≤ today; before the first due date it is the first due. **Status** for a member on a due: Paid if paid ≥ due amount, Partly paid if 0 < paid < amount, Pending if 0. **Overdue count** = past dues not fully paid. **Due so far** = sum of amounts of dues with due date ≤ today. |

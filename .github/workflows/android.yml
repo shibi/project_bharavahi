@@ -21,11 +21,14 @@ jobs:
       # google-services.json is git-ignored. CI only needs a file with the right shape to compile.
       - name: Placeholder Firebase config
         run: |
-          cat > app-superadmin/google-services.json <<'JSON'
+          for app in superadmin:com.bharavahi.superadmin org:com.bharavahi.org; do
+            module="app-${app%%:*}"
+            package="${app#*:}"
+            cat > "$module/google-services.json" <<JSON
           {
             "project_info": { "project_number": "000000000000", "project_id": "bharavahi-ci", "storage_bucket": "bharavahi-ci.appspot.com" },
             "client": [{
-              "client_info": { "mobilesdk_app_id": "1:000000000000:android:0000000000000000", "android_client_info": { "package_name": "com.bharavahi.superadmin" } },
+              "client_info": { "mobilesdk_app_id": "1:000000000000:android:0000000000000000", "android_client_info": { "package_name": "$package" } },
               "oauth_client": [],
               "api_key": [{ "current_key": "ci-placeholder" }],
               "services": { "appinvite_service": { "other_platform_oauth_client": [] } }
@@ -33,6 +36,7 @@ jobs:
             "configuration_version": "1"
           }
           JSON
+          done
 
       - name: Unit tests and debug build
-        run: ./gradlew --no-daemon :core:domain:test :app-superadmin:assembleDebug
+        run: ./gradlew --no-daemon :core:domain:test :app-superadmin:assembleDebug :app-org:assembleDebug

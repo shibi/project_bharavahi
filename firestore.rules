@@ -38,7 +38,9 @@ service cloud.firestore {
     match /organizations/{orgId} {
       allow read: if isSuper() || isAdminOf(orgId);
       allow create, delete: if isSuper();
-      allow update: if isSuper() || isAdminOf(orgId);
+      // Community admins only move the counters (BR-12); name and status belong to the super admin.
+      allow update: if isSuper() || (isAdminOf(orgId)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberCount', 'eventCount']));
 
       match /{coll}/{docId} {
         allow read, write: if isSuper() || isAdminOf(orgId);
