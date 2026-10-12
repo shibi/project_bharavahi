@@ -29,7 +29,7 @@ type-safe routes, Firebase Auth + Firestore (offline cache on), DataStore. Min S
 1. **Firebase project.** Create one at <https://console.firebase.google.com>, then:
    - Enable **Authentication → Email/Password**.
    - Create a **Cloud Firestore** database.
-   - Add an Android app with package `com.bharavahi.superadmin`, download `google-services.json`
+   - Add an Android app with package `com.bharavahi.superadmin`, download `app-superadmin/google-services.json`
      and put it in `app-superadmin/`. (It is git-ignored.)
 2. **Rules and indexes.** With the Firebase CLI: `firebase deploy --only firestore` from the repo root
    (uses `firestore.rules` and `firestore.indexes.json`).

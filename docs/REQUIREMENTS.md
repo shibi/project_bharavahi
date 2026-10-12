@@ -426,7 +426,7 @@ Known trade-offs (accepted):
 | NFR-7 | Lists are paged / use Firestore queries with indexes; screens stay responsive with 500 members per community. |
 | NFR-8 | Material 3 theming with light and dark modes, per section 14 (UI theming). |
 | NFR-10 | English only. All user-visible text lives in `strings.xml` (no hard-coded strings in composables). |
-| NFR-9 | No secrets committed to the repository. `google-services.json` per app is fine to commit for a private repo; otherwise keep it out of version control. |
+| NFR-9 | No secrets committed to the repository. `../app-superadmin/google-services.json` per app is fine to commit for a private repo; otherwise keep it out of version control. |
 
 ---
 

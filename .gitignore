@@ -8,4 +8,4 @@ build/
 .externalNativeBuild
 .cxx
 # Firebase config is per developer / per Firebase project
-google-services.json
+app-superadmin/google-services.json
