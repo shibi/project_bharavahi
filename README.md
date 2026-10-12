@@ -14,14 +14,14 @@ events and recurring due cycles. Firebase is the only backend.
 | `core:data` | Android library | Firebase Auth / Firestore / DataStore implementations of the domain interfaces, Hilt bindings. |
 | `core:ui` | Android library | `BharavahiTheme`, the swappable `BrandPalette`s, shared Compose components, shared strings. |
 | `app-superadmin` | Android app | Super Admin app: screens and ViewModels only. |
-| `app-org` | Android app | Organization app (not started yet). |
+| `app-org` | Android app | Organization app for community admins: screens and ViewModels only. |
 
 Dependencies point inwards only: `app → core:ui, core:data → core:domain`.
 Screens talk to ViewModels, ViewModels call use cases, use cases depend on repository interfaces.
 
 ## Tech
 
-Kotlin 2.0, Jetpack Compose (Material 3), MVVM with `StateFlow`, Hilt, Navigation Compose with
+Kotlin 2.1, Jetpack Compose (Material 3), MVVM with `StateFlow`, Hilt, Navigation Compose with
 type-safe routes, Firebase Auth + Firestore (offline cache on), DataStore. Min SDK 26, target 35.
 
 ## First-time setup
@@ -38,6 +38,10 @@ type-safe routes, Firebase Auth + Firestore (offline cache on), DataStore. Min S
    - Firestore → create collection `superAdmins`, document ID = that UID, fields
      `name` (string) and `email` (string).
 4. **Run.** Open the project in Android Studio (Ladybug or newer, JDK 17+) and run `app-superadmin`.
+5. **Organization app.** In the same Firebase project, add a second Android app with package
+   `com.bharavahi.org`, download its `google-services.json` and put it in `app-org/` (also git-ignored).
+   Run `app-org` and sign in with the admin email and temporary password you entered when creating
+   the community in the Super Admin app. Redeploy the rules (step 2) whenever `firestore.rules` changes.
 
 ## Theming
 

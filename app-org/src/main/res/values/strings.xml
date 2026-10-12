@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Bharavahi</string>
+
+    <!-- Common -->
+    <string name="navigate_back">Back</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="save">Save</string>
+    <string name="back">Back</string>
+    <string name="next">Next</string>
+    <string name="delete">Delete</string>
+    <string name="remove">Remove</string>
+    <string name="more_actions">More actions</string>
+    <string name="filter_all">All</string>
+    <string name="select_all">Select all</string>
+    <string name="select_none">Clear selection</string>
+    <string name="start_date">Start date</string>
+    <string name="end_date">End date</string>
+
+    <!-- Login (ORG-1) -->
+    <string name="login_title">Bharavahi</string>
+    <string name="login_subtitle">Sign in with the admin login your community was given.</string>
+    <string name="login_email">Email</string>
+    <string name="login_password">Password</string>
+    <string name="login_button">Sign in</string>
+    <string name="login_not_allowed">This login can\'t open a community right now. The login may be turned off, or the community paused. Contact the Bharavahi owner.</string>
+
+    <!-- Bottom navigation (UI-10) -->
+    <string name="tab_dashboard">Dashboard</string>
+    <string name="tab_events">Events</string>
+    <string name="tab_members">Members</string>
+    <string name="tab_profile">Profile</string>
+    <string name="mark_payment">Mark payment</string>
+    <string name="mark_payment_coming">Marking payments comes in the next update.</string>
+
+    <!-- Dashboard (ORG-5) -->
+    <string name="dashboard_unavailable">Couldn\'t load the dashboard.</string>
+    <string name="dashboard_active_events">Active events</string>
+    <string name="dashboard_collected">%1$s collected in active events</string>
+    <string name="dashboard_getting_started">No active events yet. Add your members, then create an event to start collecting dues.</string>
+    <plurals name="dashboard_members">
+        <item quantity="one">%d active member</item>
+        <item quantity="other">%d active members</item>
+    </plurals>
+    <plurals name="dashboard_events">
+        <item quantity="one">%d active event</item>
+        <item quantity="other">%d active events</item>
+    </plurals>
+
+    <!-- Members (ORG-6 to ORG-9) -->
+    <string name="members_add">Add member</string>
+    <string name="members_search">Search name, nickname or phone</string>
+    <string name="members_empty">No members yet. Add the people in your community to get started.</string>
+    <string name="members_no_match">No members match.</string>
+    <string name="member_status_active">Active</string>
+    <string name="member_status_disabled">Disabled</string>
+    <string name="member_status_archived">Archived</string>
+    <string name="member_form_add_title">Add member</string>
+    <string name="member_form_edit_title">Edit member</string>
+    <string name="member_form_add">Add member</string>
+    <string name="member_name">Name</string>
+    <string name="member_nickname">Nickname (optional)</string>
+    <string name="member_phone">Phone (optional)</string>
+    <string name="member_email">Email (optional)</string>
+    <string name="member_status_title">Status</string>
+    <string name="member_status_help">Disabled members are left out of pending lists and the WhatsApp message. Archive someone who has left. Payment history is always kept.</string>
+    <string name="member_action_enable">Enable</string>
+    <string name="member_action_disable">Disable</string>
+    <string name="member_action_archive">Archive</string>
+    <string name="member_confirm_enable">Make %1$s active again?</string>
+    <string name="member_confirm_disable">Disable %1$s? Their payments stay, but they won\'t show in pending lists.</string>
+    <string name="member_confirm_archive">Archive %1$s? Use this when someone has left the community. Their payments stay.</string>
+
+    <!-- Events (ORG-10 to ORG-13) -->
+    <string name="events_create">Create event</string>
+    <string name="events_empty">No events yet. Create one for your next celebration or collection.</string>
+    <string name="events_no_match">No events with this status.</string>
+    <string name="event_status_active">Active</string>
+    <string name="event_status_suspended">Suspended</string>
+    <string name="event_status_archived">Archived</string>
+    <string name="event_status_closed">Closed</string>
+    <string name="event_dates">%1$s to %2$s</string>
+    <string name="event_collected_short">Collected %1$s</string>
+    <string name="event_balance_short">Balance %1$s</string>
+    <string name="event_form_create_title">Create event</string>
+    <string name="event_form_edit_title">Edit event</string>
+    <string name="event_form_step">Step %1$d of %2$d: %3$s</string>
+    <string name="event_step_details">Details</string>
+    <string name="event_step_balance">Opening balance</string>
+    <string name="event_step_roles">Roles</string>
+    <string name="event_step_members">Members</string>
+    <string name="event_name">Event name</string>
+    <string name="event_description">Description (optional)</string>
+    <string name="event_opening_balance">Opening balance (₹)</string>
+    <string name="event_form_balance_help">Money already in hand when the event starts, for example left over from last year. Leave empty for none.</string>
+    <string name="event_form_roles_help">Positions in this event, such as President or Secretary. You can change them later.</string>
+    <string name="event_form_members_help">Tick the members taking part and pick a role for anyone who has one. You can add more members later; they will owe every due.</string>
+    <string name="event_form_no_members">There are no active members yet. You can create the event now and add members later.</string>
+    <string name="event_form_create">Create event</string>
+    <string name="event_not_found">This item no longer exists.</string>
+    <string name="event_edit">Edit event</string>
+    <string name="event_balance">Balance %1$s</string>
+    <string name="event_total_collected">Collected</string>
+    <string name="event_total_expenses">Expenses</string>
+    <string name="event_schedules">Schedules</string>
+    <string name="event_no_schedules">No schedules yet. Add one to split the amount each member owes into dues.</string>
+    <string name="event_roles">Roles</string>
+    <string name="event_no_roles">No roles.</string>
+    <string name="event_members_count">Members (%1$d)</string>
+    <string name="event_add_members">Add members</string>
+    <string name="event_no_members">No members in this event yet.</string>
+    <string name="event_member_paid">Paid %1$s</string>
+    <string name="event_member_disabled">Disabled</string>
+    <string name="event_remove_member">Remove from event</string>
+    <string name="event_remove_member_confirm">Remove %1$s from this event? Only members with no payments can be removed.</string>
+    <string name="event_action_reactivate">Make active</string>
+    <string name="event_action_suspend">Suspend</string>
+    <string name="event_action_archive">Archive</string>
+    <string name="event_action_close">Close</string>
+    <string name="event_confirm_reactivate">Make this event active again?</string>
+    <string name="event_confirm_suspend">Suspend this event? Collections pause until you make it active again.</string>
+    <string name="event_confirm_archive">Archive this event? It moves out of the active list. Its records are kept.</string>
+    <string name="event_confirm_close">Close this event? Use this when it is finished. Its records are kept.</string>
+
+    <!-- Roles -->
+    <string name="role_none">No role</string>
+    <string name="roles_edit">Edit roles</string>
+    <string name="roles_new">New role</string>
+    <string name="roles_add">Add role</string>
+    <string name="roles_remove">Remove %1$s</string>
+
+    <!-- Add members to an event (ORG-12, BR-6) -->
+    <string name="add_members_help">Members added now owe every due of every schedule, including dues already past.</string>
+    <string name="add_members_none_left">Every active member is already in this event.</string>
+    <plurals name="add_members_button">
+        <item quantity="one">Add %d member</item>
+        <item quantity="other">Add %d members</item>
+    </plurals>
+
+    <!-- Schedules (ORG-14 to ORG-16) -->
+    <string name="schedule_add">Add schedule</string>
+    <string name="schedule_form_add_title">Add schedule</string>
+    <string name="schedule_form_edit_title">Edit schedule</string>
+    <string name="schedule_form_create">Create schedule</string>
+    <string name="schedule_name">Schedule name</string>
+    <string name="schedule_description">Description (optional)</string>
+    <string name="schedule_amount">Amount per member (₹)</string>
+    <string name="schedule_amount_help">The total each member pays across all dues</string>
+    <string name="schedule_dues">Number of dues</string>
+    <string name="schedule_preview">Dues preview</string>
+    <string name="schedule_preview_help">Each member owes every due below.</string>
+    <string name="schedule_summary">%1$s per member in %2$d dues, %3$s to %4$s</string>
+    <string name="schedule_edit">Edit schedule</string>
+    <string name="schedule_delete">Delete schedule</string>
+    <string name="schedule_delete_confirm">Delete %1$s? This is only possible before any payment is marked.</string>
+    <string name="schedule_locked">Payments have been marked, so the dues are fixed.</string>
+    <string name="schedule_unlocked">No payments yet. You can still edit or delete this schedule.</string>
+    <string name="due_date">Due on %1$s</string>
+    <string name="due_current">Current due, %1$s</string>
+    <string name="due_count">%1$d %2$s</string>
+    <string name="due_status_paid">Paid</string>
+    <string name="due_status_partly_paid">Partly paid</string>
+    <string name="due_status_pending">Pending</string>
+
+    <!-- Profile (ORG-3, UI-5) -->
+    <string name="profile_signed_in_as">Signed in as</string>
+    <string name="profile_theme">Theme</string>
+    <string name="theme_system">Follow system</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="profile_sign_out">Sign out</string>
+</resources>

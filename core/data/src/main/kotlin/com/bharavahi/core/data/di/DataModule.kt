@@ -1,6 +1,11 @@
 package com.bharavahi.core.data.di
 
 import com.bharavahi.core.data.firebase.FirebaseAdminAccountGateway
+import com.bharavahi.core.data.firebase.FirebaseOrgContext
+import com.bharavahi.core.data.firebase.FirestoreAdminIndexRepository
+import com.bharavahi.core.data.firebase.FirestoreEventRepository
+import com.bharavahi.core.data.firebase.FirestoreMemberRepository
+import com.bharavahi.core.data.firebase.FirestoreScheduleRepository
 import com.bharavahi.core.data.firebase.FirebaseAuthRepository
 import com.bharavahi.core.data.firebase.FirestoreActivityRepository
 import com.bharavahi.core.data.firebase.FirestoreMailConfigRepository
@@ -9,6 +14,11 @@ import com.bharavahi.core.data.firebase.FirestoreOrganizationRepository
 import com.bharavahi.core.data.firebase.FirestoreSuperAdminRepository
 import com.bharavahi.core.data.preferences.DataStoreThemePreferenceRepository
 import com.bharavahi.core.domain.repository.ActivityRepository
+import com.bharavahi.core.domain.repository.AdminIndexRepository
+import com.bharavahi.core.domain.repository.EventRepository
+import com.bharavahi.core.domain.repository.MemberRepository
+import com.bharavahi.core.domain.repository.OrgContext
+import com.bharavahi.core.domain.repository.ScheduleRepository
 import com.bharavahi.core.domain.repository.AdminAccountGateway
 import com.bharavahi.core.domain.repository.AuthRepository
 import com.bharavahi.core.domain.repository.MailConfigRepository
@@ -56,4 +66,9 @@ internal abstract class RepositoryModule {
     @Binds abstract fun mailConfigRepository(impl: FirestoreMailConfigRepository): MailConfigRepository
     @Binds abstract fun adminAccountGateway(impl: FirebaseAdminAccountGateway): AdminAccountGateway
     @Binds abstract fun themePreferenceRepository(impl: DataStoreThemePreferenceRepository): ThemePreferenceRepository
+    @Binds abstract fun adminIndexRepository(impl: FirestoreAdminIndexRepository): AdminIndexRepository
+    @Binds abstract fun orgContext(impl: FirebaseOrgContext): OrgContext
+    @Binds abstract fun memberRepository(impl: FirestoreMemberRepository): MemberRepository
+    @Binds abstract fun eventRepository(impl: FirestoreEventRepository): EventRepository
+    @Binds abstract fun scheduleRepository(impl: FirestoreScheduleRepository): ScheduleRepository
 }
