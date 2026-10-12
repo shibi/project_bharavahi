@@ -1,0 +1,11 @@
+*.iml
+.gradle/
+/local.properties
+.idea/
+.DS_Store
+build/
+/captures
+.externalNativeBuild
+.cxx
+# Firebase config is per developer / per Firebase project
+google-services.json
