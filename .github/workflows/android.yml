@@ -1,0 +1,38 @@
+name: Android
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      # google-services.json is git-ignored. CI only needs a file with the right shape to compile.
+      - name: Placeholder Firebase config
+        run: |
+          cat > app-superadmin/google-services.json <<'JSON'
+          {
+            "project_info": { "project_number": "000000000000", "project_id": "bharavahi-ci", "storage_bucket": "bharavahi-ci.appspot.com" },
+            "client": [{
+              "client_info": { "mobilesdk_app_id": "1:000000000000:android:0000000000000000", "android_client_info": { "package_name": "com.bharavahi.superadmin" } },
+              "oauth_client": [],
+              "api_key": [{ "current_key": "ci-placeholder" }],
+              "services": { "appinvite_service": { "other_platform_oauth_client": [] } }
+            }],
+            "configuration_version": "1"
+          }
+          JSON
+
+      - name: Unit tests and debug build
+        run: ./gradlew --no-daemon :core:domain:test :app-superadmin:assembleDebug

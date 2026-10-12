@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="core_error_invalid_credentials">Wrong email or password.</string>
+    <string name="core_error_not_authorized">This account isn\'t allowed to do that.</string>
+    <string name="core_error_email_in_use">An account with this email already exists.</string>
+    <string name="core_error_not_found">This item no longer exists.</string>
+    <string name="core_error_confirmation_mismatch">The name you typed doesn\'t match.</string>
+    <string name="core_error_network">No internet connection. Check your connection and try again.</string>
+    <string name="core_error_validation">Please fix the highlighted fields.</string>
+    <string name="core_error_unknown">Something went wrong. Please try again.</string>
+
+    <string name="core_validation_required">Required</string>
+    <string name="core_validation_invalid_email">Enter a valid email address</string>
+    <string name="core_validation_invalid_phone">Enter a valid phone number</string>
+    <string name="core_validation_password_short">Use at least 8 characters</string>
+
+    <string name="core_retry">Try again</string>
+    <string name="core_cancel">Cancel</string>
+    <string name="core_loading">Loading</string>
+</resources>
