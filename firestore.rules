@@ -1,0 +1,61 @@
+rules_version = '2';
+// REQUIREMENTS.md section 10. Deploy with: firebase deploy --only firestore:rules
+service cloud.firestore {
+  match /databases/{db}/documents {
+    function isSuper() {
+      return request.auth != null
+        && exists(/databases/$(db)/documents/superAdmins/$(request.auth.uid));
+    }
+    function idx() {
+      return get(/databases/$(db)/documents/adminIndex/$(request.auth.uid)).data;
+    }
+    function isAdminOf(orgId) {
+      return request.auth != null && idx().active && idx().orgId == orgId
+        && get(/databases/$(db)/documents/organizations/$(orgId)).data.status == 'active';
+    }
+
+    // Super admins are added by hand in the Firebase console.
+    match /superAdmins/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    match /config/mail {
+      allow read: if isSuper() || (request.auth != null && idx().active);
+      allow write: if isSuper();
+    }
+
+    match /adminIndex/{uid} {
+      allow read: if request.auth != null && (request.auth.uid == uid || isSuper());
+      allow write: if isSuper() || isAdminOf(request.resource.data.orgId);
+    }
+
+    // Super admin dashboard: recent activity across all communities.
+    match /{path=**}/activity/{logId} {
+      allow read: if isSuper();
+    }
+
+    match /organizations/{orgId} {
+      allow read: if isSuper() || isAdminOf(orgId);
+      allow create, delete: if isSuper();
+      allow update: if isSuper() || isAdminOf(orgId);
+
+      match /{coll}/{docId} {
+        allow read, write: if isSuper() || isAdminOf(orgId);
+      }
+
+      match /events/{eventId}/{coll}/{docId} {
+        allow read: if isSuper() || isAdminOf(orgId);
+        allow write: if coll != 'payments' && isAdminOf(orgId);
+      }
+
+      match /events/{eventId}/payments/{paymentId} {
+        allow read: if isSuper() || isAdminOf(orgId);
+        allow create: if isAdminOf(orgId);
+        allow update: if isAdminOf(orgId)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['emailStatus']);
+        allow delete: if false;
+      }
+    }
+  }
+}
