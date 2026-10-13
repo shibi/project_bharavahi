@@ -229,13 +229,20 @@
 
     <string name="member_dues_breakdown">Dues</string>
     <string name="member_dues_history">Payment history</string>
-    <string name="member_dues_event_total">Event total %1$s</string>
+    <string name="member_dues_pending_label">Pending</string>
+    <string name="member_dues_paid_label">Paid</string>
+    <string name="member_dues_due_so_far_label">Due so far</string>
+    <string name="member_dues_total_label">Event total</string>
     <string name="member_dues_line">%1$s paid of %2$s</string>
     <string name="member_dues_overpaid">More than the due was paid. Reverse the extra payment if this was a mistake.</string>
 
     <string name="expenses_title">Expenses</string>
     <string name="expenses_empty">No expenses yet.</string>
-    <string name="expenses_total">Total spent %1$s</string>
+    <string name="expenses_total_label">Total spent</string>
+    <plurals name="expenses_count">
+        <item quantity="one">%1$d expense</item>
+        <item quantity="other">%1$d expenses</item>
+    </plurals>
     <string name="expense_add">Add expense</string>
     <string name="expense_title">Title</string>
     <string name="expense_amount">Amount (₹)</string>

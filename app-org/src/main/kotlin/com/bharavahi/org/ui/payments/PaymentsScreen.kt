@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -84,15 +83,17 @@ fun PaymentsScreen(
                     items(state.visible, key = Payment::id) { payment ->
                         val schedule = state.schedules.firstOrNull { it.id == payment.scheduleId }
                         val reversed = payment.id in state.reversedIds
+                        val memberName = state.members.firstOrNull { it.memberId == payment.memberId }?.name.orEmpty()
                         PaymentRow(
                             payment = payment,
-                            title = state.members.firstOrNull { it.memberId == payment.memberId }?.name.orEmpty(),
+                            title = memberName,
                             dueLabel = schedule?.dues?.firstOrNull { it.index == payment.dueIndex }?.label ?: schedule?.name.orEmpty(),
                             reversed = reversed,
                             onReverse = if (payment.isReversal || reversed) null else ({ confirmReverse = payment }),
                             onResend = if (payment.emailStatus == EmailStatus.FAILED) ({ viewModel.resend(payment.id) }) else null,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
+                            avatarName = memberName,
                         )
-                        HorizontalDivider()
                     }
                 }
             }
