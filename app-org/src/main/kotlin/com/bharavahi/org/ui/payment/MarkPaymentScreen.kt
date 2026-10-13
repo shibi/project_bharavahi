@@ -12,9 +12,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -66,6 +67,10 @@ fun MarkPaymentScreen(
                 Button(
                     onClick = viewModel::save,
                     enabled = !state.saving,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.secondary,
+                        contentColor = MaterialTheme.colorScheme.onSecondary,
+                    ),
                     modifier = Modifier.fillMaxWidth().imePadding().padding(16.dp).height(48.dp),
                 ) {
                     if (state.saving) {
@@ -172,13 +177,14 @@ private fun Form(state: MarkPaymentUiState, viewModel: MarkPaymentViewModel, mod
             keyboardType = KeyboardType.Decimal,
             modifier = Modifier.fillMaxWidth(),
         )
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
             PAYMENT_METHODS.forEach { method ->
-                FilterChip(
-                    selected = state.method == method,
-                    onClick = { viewModel.onMethodChange(method) },
-                    label = { Text(stringResource(method.labelRes())) },
-                )
+                val label = @Composable { Text(stringResource(method.labelRes())) }
+                if (state.method == method) {
+                    Button(onClick = { viewModel.onMethodChange(method) }, modifier = Modifier.weight(1f)) { label() }
+                } else {
+                    OutlinedButton(onClick = { viewModel.onMethodChange(method) }, modifier = Modifier.weight(1f)) { label() }
+                }
             }
         }
         DateField(

@@ -1,7 +1,12 @@
 package com.bharavahi.org.ui.common
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -65,6 +70,19 @@ fun TabTopBar(title: String, actions: @Composable () -> Unit = {}) {
 @Composable
 fun SectionTitle(text: String, modifier: Modifier = Modifier) {
     Text(text, style = MaterialTheme.typography.titleMedium, modifier = modifier.padding(top = 12.dp, bottom = 4.dp))
+}
+
+/** Round avatar with the member's initials (design: member and payment rows). */
+@Composable
+fun InitialsAvatar(name: String, modifier: Modifier = Modifier) {
+    val initials = name.trim().split(Regex("\\s+")).filter { it.isNotEmpty() }
+        .take(2).joinToString("") { it.first().uppercase() }
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier.size(40.dp).clip(CircleShape).background(MaterialTheme.colorScheme.tertiaryContainer),
+    ) {
+        Text(initials, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onTertiaryContainer)
+    }
 }
 
 @StringRes

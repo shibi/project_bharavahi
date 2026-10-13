@@ -1,12 +1,17 @@
 package com.bharavahi.org.ui.eventdues
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.ui.Alignment
+import com.bharavahi.org.ui.common.InitialsAvatar
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -16,10 +21,8 @@ import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -55,6 +58,7 @@ import kotlinx.coroutines.launch
 fun EventDuesScreen(
     onBack: () -> Unit,
     onOpenMember: (eventId: String, memberId: String) -> Unit,
+    onMarkPayment: (eventId: String, memberId: String) -> Unit,
     viewModel: EventDuesViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -82,9 +86,26 @@ fun EventDuesScreen(
                 state.totalCount == 0 -> MessageContent(stringResource(R.string.event_no_members))
                 state.visible.isEmpty() -> MessageContent(stringResource(R.string.members_no_match))
                 else -> LazyColumn {
+                    item {
+                        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp)) {
+                            Text(
+                                stringResource(R.string.dues_showing, state.visible.size),
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier.weight(1f),
+                            )
+                            Text(
+                                stringResource(R.string.dues_total_pending, formatRupees(state.visible.sumOf { it.pending })),
+                                style = MaterialTheme.typography.labelMedium,
+                            )
+                        }
+                    }
                     items(state.visible, key = { it.member.memberId }) { dues ->
-                        DuesRow(dues, state.roles, onClick = { onOpenMember(viewModel.eventId, dues.member.memberId) })
-                        HorizontalDivider()
+                        DuesRow(
+                            dues,
+                            state.roles,
+                            onClick = { onOpenMember(viewModel.eventId, dues.member.memberId) },
+                            onMarkPayment = { onMarkPayment(viewModel.eventId, dues.member.memberId) },
+                        )
                     }
                 }
             }
@@ -120,27 +141,46 @@ private fun Filters(state: EventDuesUiState, viewModel: EventDuesViewModel) {
     }
 }
 
+/** Design: member card with avatar, status pill and a Mark payment action while something is pending. */
 @Composable
-private fun DuesRow(dues: MemberDues, roles: List<EventRole>, onClick: () -> Unit) {
+private fun DuesRow(dues: MemberDues, roles: List<EventRole>, onClick: () -> Unit, onMarkPayment: () -> Unit) {
     val role = roles.firstOrNull { it.id == dues.member.roleId }?.name
-    ListItem(
-        headlineContent = { Text(dues.member.name + if (role != null) " · $role" else "") },
-        supportingContent = {
-            Column {
-                Text(stringResource(R.string.dues_row_amounts, formatRupees(dues.totalPaid), formatRupees(dues.dueSoFar), formatRupees(dues.pending)))
-                if (dues.overdueCount > 0) {
-                    Text(
-                        stringResource(R.string.dues_row_overdue, dues.overdueCount),
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall,
-                    )
+    Card(onClick = onClick, modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp)) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                InitialsAvatar(dues.member.name)
+                Column(Modifier.weight(1f)) {
+                    Text(dues.member.name, style = MaterialTheme.typography.titleMedium)
+                    if (role != null) {
+                        Text(role, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                 }
-                if (!dues.member.active) Text(stringResource(R.string.event_member_disabled), style = MaterialTheme.typography.bodySmall)
+                StatusBadge(stringResource(dues.currentStatus.labelRes()), dues.currentStatus.color())
             }
-        },
-        trailingContent = { StatusBadge(stringResource(dues.currentStatus.labelRes()), dues.currentStatus.color()) },
-        modifier = Modifier.clickable(onClick = onClick),
-    )
+            Text(
+                stringResource(R.string.dues_row_amounts, formatRupees(dues.totalPaid), formatRupees(dues.dueSoFar), formatRupees(dues.pending)),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            if (dues.overdueCount > 0) {
+                Text(
+                    stringResource(R.string.dues_row_overdue, dues.overdueCount),
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+            if (!dues.member.active) Text(stringResource(R.string.event_member_disabled), style = MaterialTheme.typography.bodySmall)
+            if (dues.pending > 0 && dues.member.active) {
+                Button(
+                    onClick = onMarkPayment,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.secondary,
+                        contentColor = MaterialTheme.colorScheme.onSecondary,
+                    ),
+                    modifier = Modifier.align(Alignment.End),
+                ) { Text(stringResource(R.string.mark_payment)) }
+            }
+        }
+    }
 }
 
 @Composable

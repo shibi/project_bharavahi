@@ -127,6 +127,7 @@ fun OrgNavHost(
                     onOpenEvent = { navController.navigate(EventDetailRoute(it)) },
                     onCreateEvent = { navController.navigate(CreateEventRoute) },
                     onAddMember = { navController.navigate(AddMemberRoute) },
+                    onCollectDues = { navController.navigate(MarkPaymentRoute()) },
                 )
             }
             composable<EventsRoute> {
@@ -197,6 +198,7 @@ fun OrgNavHost(
                 EventDuesScreen(
                     onBack = navController::navigateUp,
                     onOpenMember = { eventId, memberId -> navController.navigate(MemberDuesRoute(eventId, memberId)) },
+                    onMarkPayment = { eventId, memberId -> navController.navigate(MarkPaymentRoute(eventId, memberId)) },
                 )
             }
             composable<MemberDuesRoute> {

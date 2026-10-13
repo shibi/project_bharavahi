@@ -244,4 +244,9 @@
     <string name="expense_paid_by_label">Paid by (optional)</string>
     <string name="expense_paid_by_none">Nobody selected</string>
     <string name="expense_paid_by">paid by %1$s</string>
+    <string name="dashboard_total_collection">Total collection</string>
+    <string name="dashboard_collect_dues">Collect dues</string>
+    <string name="event_opening_balance_short">Opening balance</string>
+    <string name="dues_showing">Showing %1$d members</string>
+    <string name="dues_total_pending">Total %1$s due</string>
 </resources>

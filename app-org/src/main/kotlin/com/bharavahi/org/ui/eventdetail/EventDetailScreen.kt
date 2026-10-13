@@ -1,6 +1,10 @@
 package com.bharavahi.org.ui.eventdetail
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -253,21 +257,28 @@ private fun Overview(event: Event) {
             }
             Text(
                 stringResource(R.string.event_balance, formatRupees(event.balance)),
-                style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier.padding(top = 4.dp),
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier.padding(top = 4.dp, bottom = 8.dp),
             )
-            Amount(R.string.event_opening_balance, event.openingBalance)
-            Amount(R.string.event_total_collected, event.totalCollected)
-            Amount(R.string.event_total_expenses, event.totalExpenses)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                StatTile(R.string.event_opening_balance_short, event.openingBalance, Modifier.weight(1f))
+                StatTile(R.string.event_total_collected, event.totalCollected, Modifier.weight(1f))
+            }
+            StatTile(R.string.event_total_expenses, event.totalExpenses, Modifier.fillMaxWidth())
         }
     }
 }
 
+/** Translucent tile on the teal overview card (design: Event Detail stat grid). */
 @Composable
-private fun Amount(labelRes: Int, paise: Long) {
-    Row {
-        Text(stringResource(labelRes), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
-        Text(formatRupees(paise), style = MaterialTheme.typography.bodyMedium)
+private fun StatTile(labelRes: Int, paise: Long, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .background(MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.12f), RoundedCornerShape(12.dp))
+            .padding(12.dp),
+    ) {
+        Text(stringResource(labelRes), style = MaterialTheme.typography.labelMedium)
+        Text(formatRupees(paise), style = MaterialTheme.typography.titleMedium)
     }
 }
 
@@ -388,11 +399,17 @@ private fun EventActions(
     onShare: () -> Unit,
 ) {
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        AssistChip(
+        Button(
             onClick = onMarkPayment,
-            label = { Text(stringResource(R.string.mark_payment)) },
-            leadingIcon = { Icon(Icons.Default.Add, contentDescription = null) },
-        )
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.secondary,
+                contentColor = MaterialTheme.colorScheme.onSecondary,
+            ),
+            modifier = Modifier.padding(end = 8.dp),
+        ) {
+            Icon(Icons.Default.Add, contentDescription = null)
+            Text(stringResource(R.string.mark_payment), modifier = Modifier.padding(start = 6.dp))
+        }
         AssistChip(
             onClick = onOpenDues,
             label = { Text(stringResource(R.string.event_members_dues)) },

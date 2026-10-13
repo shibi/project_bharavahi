@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -42,6 +44,7 @@ import com.bharavahi.core.ui.components.formatRupees
 import com.bharavahi.core.ui.components.messageRes
 import com.bharavahi.core.ui.theme.LocalStatusColors
 import com.bharavahi.org.R
+import com.bharavahi.org.ui.common.InitialsAvatar
 import com.bharavahi.org.ui.common.SectionTitle
 import com.bharavahi.org.ui.common.TabTopBar
 import com.bharavahi.org.ui.common.color
@@ -53,6 +56,7 @@ fun DashboardScreen(
     onOpenEvent: (String) -> Unit,
     onCreateEvent: () -> Unit,
     onAddMember: () -> Unit,
+    onCollectDues: () -> Unit,
     viewModel: DashboardViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -70,7 +74,7 @@ fun DashboardScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                item { HeroCard(dashboard) }
+                item { HeroCard(dashboard, onCollectDues) }
                 item { SectionTitle(stringResource(R.string.dashboard_active_events)) }
                 if (dashboard.activeEvents.isEmpty()) {
                     item { GettingStarted(onCreateEvent, onAddMember) }
@@ -89,7 +93,7 @@ fun DashboardScreen(
 
 /** UI-11: the teal hero card with a progress ring for the first active event. */
 @Composable
-private fun HeroCard(dashboard: OrgDashboard) {
+private fun HeroCard(dashboard: OrgDashboard, onCollectDues: () -> Unit) {
     val first = dashboard.events.firstOrNull()
     Card(
         colors = CardDefaults.cardColors(
@@ -108,9 +112,13 @@ private fun HeroCard(dashboard: OrgDashboard) {
                     style = MaterialTheme.typography.bodyMedium,
                 )
                 Text(
-                    stringResource(R.string.dashboard_collected, formatRupees(dashboard.activeEvents.sumOf { it.totalCollected })),
-                    style = MaterialTheme.typography.titleMedium,
+                    stringResource(R.string.dashboard_total_collection),
+                    style = MaterialTheme.typography.labelMedium,
                     modifier = Modifier.padding(top = 8.dp),
+                )
+                Text(
+                    formatRupees(dashboard.activeEvents.sumOf { it.totalCollected }),
+                    style = MaterialTheme.typography.headlineLarge,
                 )
                 if (first != null) {
                     Text(
@@ -121,6 +129,14 @@ private fun HeroCard(dashboard: OrgDashboard) {
             }
             if (first != null) ProgressRing(first.progress, MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.onPrimary)
         }
+        Button(
+            onClick = onCollectDues,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.secondary,
+                contentColor = MaterialTheme.colorScheme.onSecondary,
+            ),
+            modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, bottom = 20.dp),
+        ) { Text(stringResource(R.string.dashboard_collect_dues)) }
     }
 }
 
@@ -168,6 +184,7 @@ private fun EventProgressCard(progress: EventProgress, onClick: () -> Unit) {
 @Composable
 private fun RecentPaymentRow(recent: RecentPayment) {
     ListItem(
+        leadingContent = { InitialsAvatar(recent.memberName) },
         headlineContent = { Text(recent.memberName) },
         supportingContent = { Text(recent.eventName + " · " + formatDate(recent.payment.paidOn)) },
         trailingContent = {
