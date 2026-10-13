@@ -42,6 +42,10 @@ type-safe routes, Firebase Auth + Firestore (offline cache on), DataStore. Min S
    `com.bharavahi.org`, download its `google-services.json` and put it in `app-org/` (also git-ignored).
    Run `app-org` and sign in with the admin email and temporary password you entered when creating
    the community in the Super Admin app. Redeploy the rules (step 2) whenever `firestore.rules` changes.
+6. **Backup email.** Every payment emails the admins a CSV of each member's total. Create a dedicated
+   Gmail account, turn on 2-step verification, create an **App password**, and enter the address and
+   app password in the Super Admin app under **Settings → Payment backup email sender**. Until then payments still save, and
+   their backup email shows as failed with a Resend button.
 
 ## Theming
 

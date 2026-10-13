@@ -32,6 +32,10 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     buildFeatures { compose = true }
+    // javax.mail and its activation jar both ship these files.
+    packaging {
+        resources.excludes += setOf("META-INF/NOTICE.md", "META-INF/LICENSE.md")
+    }
 }
 
 kotlin {
@@ -53,6 +57,9 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
+    implementation(libs.androidx.work.runtime)
+    implementation(libs.hilt.work)
+    ksp(libs.hilt.androidx.compiler)
 
     testImplementation(libs.junit)
 }

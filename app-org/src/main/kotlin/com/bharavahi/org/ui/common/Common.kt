@@ -30,8 +30,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.bharavahi.core.domain.error.ValidationError
 import com.bharavahi.core.domain.model.DueStatus
+import com.bharavahi.core.domain.model.EmailStatus
 import com.bharavahi.core.domain.model.EventStatus
 import com.bharavahi.core.domain.model.MemberStatus
+import com.bharavahi.core.domain.model.PaymentMethod
 import com.bharavahi.core.ui.components.formatDate
 import com.bharavahi.core.ui.components.messageRes
 import com.bharavahi.core.ui.theme.LocalStatusColors
@@ -161,3 +163,16 @@ fun DateField(
 }
 
 private const val MILLIS_PER_DAY = 86_400_000L
+
+@StringRes
+fun PaymentMethod.labelRes(): Int = when (this) {
+    PaymentMethod.ONLINE -> R.string.payment_method_online
+    PaymentMethod.OFFLINE -> R.string.payment_method_offline
+}
+
+@StringRes
+fun EmailStatus.labelRes(): Int = when (this) {
+    EmailStatus.PENDING -> R.string.email_status_pending
+    EmailStatus.SENT -> R.string.email_status_sent
+    EmailStatus.FAILED -> R.string.email_status_failed
+}

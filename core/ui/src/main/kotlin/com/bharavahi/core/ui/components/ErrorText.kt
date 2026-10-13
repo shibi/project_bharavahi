@@ -14,6 +14,8 @@ fun Throwable.messageRes(): Int = when (this) {
     is DomainException.ConfirmationMismatch -> R.string.core_error_confirmation_mismatch
     is DomainException.ScheduleLocked -> R.string.core_error_schedule_locked
     is DomainException.MemberHasPayments -> R.string.core_error_member_has_payments
+    is DomainException.AlreadyReversed -> R.string.core_error_already_reversed
+    is DomainException.MailNotConfigured -> R.string.core_error_mail_not_configured
     is DomainException.Network -> R.string.core_error_network
     is DomainException.Validation -> R.string.core_error_validation
     else -> R.string.core_error_unknown
@@ -30,4 +32,6 @@ fun ValidationError.messageRes(): Int = when (this) {
     ValidationError.END_BEFORE_START -> R.string.core_validation_end_before_start
     ValidationError.DUPLICATE -> R.string.core_validation_duplicate
     ValidationError.AMOUNT_TOO_SMALL -> R.string.core_validation_amount_too_small
+    ValidationError.AMOUNT_TOO_LARGE -> R.string.core_validation_amount_too_large
+    ValidationError.DUE_ALREADY_PAID -> R.string.core_validation_due_already_paid
 }

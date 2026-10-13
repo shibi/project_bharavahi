@@ -12,9 +12,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.PersonRemove
+import androidx.compose.material.icons.automirrored.filled.ReceiptLong
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -35,6 +40,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -60,6 +66,8 @@ import com.bharavahi.org.ui.common.SectionTitle
 import com.bharavahi.org.ui.common.labelRes
 import com.bharavahi.org.ui.eventform.RolesEditor
 import com.bharavahi.org.ui.eventmembers.RolePicker
+import com.bharavahi.org.ui.common.shareToWhatsApp
+import kotlinx.coroutines.launch
 
 @Composable
 fun EventDetailScreen(
@@ -68,6 +76,10 @@ fun EventDetailScreen(
     onAddMembers: (eventId: String) -> Unit,
     onAddSchedule: (eventId: String) -> Unit,
     onOpenSchedule: (eventId: String, scheduleId: String) -> Unit,
+    onMarkPayment: (eventId: String) -> Unit,
+    onOpenDues: (eventId: String) -> Unit,
+    onOpenPayments: (eventId: String) -> Unit,
+    onOpenExpenses: (eventId: String) -> Unit,
     viewModel: EventDetailViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -76,6 +88,8 @@ fun EventDetailScreen(
     val context = LocalContext.current
     var confirmStatus by remember { mutableStateOf<EventStatus?>(null) }
     var confirmRemove by remember { mutableStateOf<EventMember?>(null) }
+    val scope = rememberCoroutineScope()
+    val shareTitle = stringResource(R.string.share_whatsapp)
 
     LaunchedEffect(state.actionError) {
         state.actionError?.let {
@@ -111,6 +125,21 @@ fun EventDetailScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 item { Overview(event) }
+                item {
+                    EventActions(
+                        onMarkPayment = { onMarkPayment(event.id) },
+                        onOpenDues = { onOpenDues(event.id) },
+                        onOpenPayments = { onOpenPayments(event.id) },
+                        onOpenExpenses = { onOpenExpenses(event.id) },
+                        onShare = {
+                            scope.launch {
+                                viewModel.whatsAppText()
+                                    .onSuccess { shareToWhatsApp(context, it, shareTitle) }
+                                    .onFailure { snackbar.showSnackbar(context.getString(it.messageRes())) }
+                            }
+                        },
+                    )
+                }
 
                 item {
                     SectionHeader(stringResource(R.string.event_schedules), stringResource(R.string.schedule_add)) {
@@ -346,4 +375,43 @@ private fun EventStatus.confirmRes(): Int = when (this) {
     EventStatus.SUSPENDED -> R.string.event_confirm_suspend
     EventStatus.ARCHIVED -> R.string.event_confirm_archive
     EventStatus.CLOSED -> R.string.event_confirm_close
+}
+
+/** Stage 2 entry points: payments, member dues, expenses and the WhatsApp list. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun EventActions(
+    onMarkPayment: () -> Unit,
+    onOpenDues: () -> Unit,
+    onOpenPayments: () -> Unit,
+    onOpenExpenses: () -> Unit,
+    onShare: () -> Unit,
+) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        AssistChip(
+            onClick = onMarkPayment,
+            label = { Text(stringResource(R.string.mark_payment)) },
+            leadingIcon = { Icon(Icons.Default.Add, contentDescription = null) },
+        )
+        AssistChip(
+            onClick = onOpenDues,
+            label = { Text(stringResource(R.string.event_members_dues)) },
+            leadingIcon = { Icon(Icons.Default.Groups, contentDescription = null) },
+        )
+        AssistChip(
+            onClick = onOpenPayments,
+            label = { Text(stringResource(R.string.payments_title)) },
+            leadingIcon = { Icon(Icons.Default.Payments, contentDescription = null) },
+        )
+        AssistChip(
+            onClick = onOpenExpenses,
+            label = { Text(stringResource(R.string.expenses_title)) },
+            leadingIcon = { Icon(Icons.AutoMirrored.Filled.ReceiptLong, contentDescription = null) },
+        )
+        AssistChip(
+            onClick = onShare,
+            label = { Text(stringResource(R.string.share_whatsapp)) },
+            leadingIcon = { Icon(Icons.Default.Share, contentDescription = null) },
+        )
+    }
 }

@@ -6,6 +6,9 @@ import com.bharavahi.core.data.firebase.FirestoreAdminIndexRepository
 import com.bharavahi.core.data.firebase.FirestoreEventRepository
 import com.bharavahi.core.data.firebase.FirestoreMemberRepository
 import com.bharavahi.core.data.firebase.FirestoreScheduleRepository
+import com.bharavahi.core.data.firebase.FirestorePaymentRepository
+import com.bharavahi.core.data.firebase.FirestoreExpenseRepository
+import com.bharavahi.core.data.mail.GmailSmtpMailSender
 import com.bharavahi.core.data.firebase.FirebaseAuthRepository
 import com.bharavahi.core.data.firebase.FirestoreActivityRepository
 import com.bharavahi.core.data.firebase.FirestoreMailConfigRepository
@@ -19,6 +22,9 @@ import com.bharavahi.core.domain.repository.EventRepository
 import com.bharavahi.core.domain.repository.MemberRepository
 import com.bharavahi.core.domain.repository.OrgContext
 import com.bharavahi.core.domain.repository.ScheduleRepository
+import com.bharavahi.core.domain.repository.PaymentRepository
+import com.bharavahi.core.domain.repository.ExpenseRepository
+import com.bharavahi.core.domain.repository.MailSender
 import com.bharavahi.core.domain.repository.AdminAccountGateway
 import com.bharavahi.core.domain.repository.AuthRepository
 import com.bharavahi.core.domain.repository.MailConfigRepository
@@ -71,4 +77,7 @@ internal abstract class RepositoryModule {
     @Binds abstract fun memberRepository(impl: FirestoreMemberRepository): MemberRepository
     @Binds abstract fun eventRepository(impl: FirestoreEventRepository): EventRepository
     @Binds abstract fun scheduleRepository(impl: FirestoreScheduleRepository): ScheduleRepository
+    @Binds abstract fun paymentRepository(impl: FirestorePaymentRepository): PaymentRepository
+    @Binds abstract fun expenseRepository(impl: FirestoreExpenseRepository): ExpenseRepository
+    @Binds abstract fun mailSender(impl: GmailSmtpMailSender): MailSender
 }

@@ -7,6 +7,8 @@
     <string name="core_error_confirmation_mismatch">The name you typed doesn\'t match.</string>
     <string name="core_error_schedule_locked">This schedule already has payments, so its dues can\'t change.</string>
     <string name="core_error_member_has_payments">This member has payments in the event, so they can\'t be removed. Disable them instead.</string>
+    <string name="core_error_already_reversed">This payment has already been reversed, or is itself a reversal.</string>
+    <string name="core_error_mail_not_configured">Backup email isn\'t set up. Ask the Bharavahi owner to check the mail settings.</string>
     <string name="core_error_network">No internet connection. Check your connection and try again.</string>
     <string name="core_error_validation">Please fix the highlighted fields.</string>
     <string name="core_error_unknown">Something went wrong. Please try again.</string>
@@ -19,6 +21,8 @@
     <string name="core_validation_invalid_count">Enter a number from 1 to 120</string>
     <string name="core_validation_end_before_start">End date must be on or after the start date</string>
     <string name="core_validation_duplicate">Names must be different</string>
+    <string name="core_validation_amount_too_large">More than is owed on this due</string>
+    <string name="core_validation_due_already_paid">This due is already fully paid</string>
     <string name="core_validation_amount_too_small">Each due must be at least ₹1</string>
 
     <string name="core_retry">Try again</string>

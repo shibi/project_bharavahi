@@ -30,6 +30,8 @@ dependencies {
     implementation(libs.firebase.firestore)
     implementation(libs.kotlinx.coroutines.play.services)
     implementation(libs.androidx.datastore.preferences)
+    implementation(libs.android.mail)
+    implementation(libs.android.activation)
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)

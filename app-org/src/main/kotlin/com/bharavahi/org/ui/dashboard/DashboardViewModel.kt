@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import java.time.LocalDate
 import javax.inject.Inject
 
 data class DashboardUiState(
@@ -30,7 +31,7 @@ class DashboardViewModel @Inject constructor(
     private val retry = MutableStateFlow(0)
 
     val state: StateFlow<DashboardUiState> = retry.flatMapLatest {
-        observeDashboard()
+        observeDashboard(LocalDate.now())
             .map { DashboardUiState(loading = false, dashboard = it) }
             .catch { emit(DashboardUiState(loading = false, error = it)) }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DashboardUiState())
