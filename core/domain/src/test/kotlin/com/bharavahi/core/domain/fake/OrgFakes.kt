@@ -10,6 +10,11 @@ import com.bharavahi.core.domain.model.EventRole
 import com.bharavahi.core.domain.model.EventStatus
 import com.bharavahi.core.domain.model.NewEvent
 import com.bharavahi.core.domain.model.Schedule
+import com.bharavahi.core.domain.model.EmailStatus
+import com.bharavahi.core.domain.model.NewPayment
+import com.bharavahi.core.domain.model.Payment
+import com.bharavahi.core.domain.repository.PaymentBackupScheduler
+import com.bharavahi.core.domain.repository.PaymentRepository
 import com.bharavahi.core.domain.repository.AdminIndexRepository
 import com.bharavahi.core.domain.repository.EventRepository
 import com.bharavahi.core.domain.repository.OrgContext
@@ -81,3 +86,24 @@ fun eventMember(
     active: Boolean = true,
     paidByDue: Map<String, Long> = emptyMap(),
 ) = EventMember(id, "Name $id", roleId, active, paidByDue.values.sum(), paidByDue)
+
+class FakePaymentRepository : PaymentRepository {
+    val payments = MutableStateFlow<List<Payment>>(emptyList())
+    override fun observeAll(orgId: String, eventId: String) = payments.map { it.reversed() }
+    override suspend fun record(orgId: String, eventId: String, payment: NewPayment, reversesPaymentId: String?): String {
+        val id = "p${payments.value.size + 1}"
+        payments.value += Payment(
+            id, payment.memberId, payment.scheduleId, payment.dueIndex, payment.amount, payment.method, payment.note,
+            payment.paidOn, "admin", null, reversesPaymentId, EmailStatus.PENDING, waitingToSync = true,
+        )
+        return id
+    }
+    override suspend fun setEmailStatus(orgId: String, eventId: String, paymentId: String, status: EmailStatus) {
+        payments.value = payments.value.map { if (it.id == paymentId) it.copy(emailStatus = status) else it }
+    }
+}
+
+class FakeBackupScheduler : PaymentBackupScheduler {
+    val queued = mutableListOf<String>()
+    override fun enqueue(orgId: String, eventId: String, paymentId: String) { queued += paymentId }
+}

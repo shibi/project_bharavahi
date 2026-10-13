@@ -27,3 +27,14 @@ class MoneyTest {
         assertThat(Money.toInput(1_250)).isEqualTo("12.50")
     }
 }
+
+class MoneyFormatTest {
+    @Test
+    fun `indian grouping`() {
+        assertThat(Money.format(15_000_000)).isEqualTo("₹1,50,000")
+        assertThat(Money.format(123_456_789_00)).isEqualTo("₹12,34,56,789")
+        assertThat(Money.format(99_900)).isEqualTo("₹999")
+        assertThat(Money.format(1_250)).isEqualTo("₹12.50")
+        assertThat(Money.format(-50_000)).isEqualTo("-₹500")
+    }
+}

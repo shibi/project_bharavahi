@@ -13,6 +13,8 @@ internal object FirestorePaths {
     const val EVENTS = "events"
     const val EVENT_MEMBERS = "eventMembers"
     const val SCHEDULES = "schedules"
+    const val PAYMENTS = "payments"
+    const val EXPENSES = "expenses"
 
     object Org {
         const val NAME = "name"
@@ -106,5 +108,29 @@ internal object FirestorePaths {
         const val LABEL = "label"
         const val DUE_DATE = "dueDate"
         const val AMOUNT = "amount"
+    }
+
+    object Payment {
+        const val MEMBER_ID = "memberId"
+        const val SCHEDULE_ID = "scheduleId"
+        const val DUE_INDEX = "dueIndex"
+        const val AMOUNT = "amount"
+        const val METHOD = "method"
+        const val NOTE = "note"
+        const val PAID_ON = "paidOn"
+        const val RECORDED_BY = "recordedBy"
+        const val CREATED_AT = "createdAt"
+        const val REVERSES_PAYMENT_ID = "reversesPaymentId"
+        const val EMAIL_STATUS = "emailStatus"
+    }
+
+    object Expense {
+        const val TITLE = "title"
+        const val AMOUNT = "amount"
+        const val DATE = "date"
+        const val DESCRIPTION = "description"
+        const val PAID_BY_MEMBER_ID = "paidByMemberId"
+        const val RECORDED_BY = "recordedBy"
+        const val CREATED_AT = "createdAt"
     }
 }

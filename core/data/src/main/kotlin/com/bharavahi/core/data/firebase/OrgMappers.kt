@@ -1,6 +1,10 @@
 package com.bharavahi.core.data.firebase
 
 import com.bharavahi.core.domain.model.Due
+import com.bharavahi.core.domain.model.EmailStatus
+import com.bharavahi.core.domain.model.Expense
+import com.bharavahi.core.domain.model.Payment
+import com.bharavahi.core.domain.model.PaymentMethod
 import com.bharavahi.core.domain.model.Event
 import com.bharavahi.core.domain.model.EventMember
 import com.bharavahi.core.domain.model.EventRole
@@ -104,4 +108,38 @@ internal fun Schedule.toMap(): Map<String, Any> = mapOf(
         )
     },
     FirestorePaths.Schedule.LOCKED to locked,
+)
+
+internal fun EmailStatus.toFirestore(): String = name.lowercase()
+
+internal fun PaymentMethod.toFirestore(): String = name.lowercase()
+
+internal fun DocumentSnapshot.toPayment(): Payment = Payment(
+    id = id,
+    memberId = getString(FirestorePaths.Payment.MEMBER_ID).orEmpty(),
+    scheduleId = getString(FirestorePaths.Payment.SCHEDULE_ID).orEmpty(),
+    dueIndex = (getLong(FirestorePaths.Payment.DUE_INDEX) ?: 0L).toInt(),
+    amount = getLong(FirestorePaths.Payment.AMOUNT) ?: 0L,
+    method = PaymentMethod.entries.firstOrNull { it.name.equals(getString(FirestorePaths.Payment.METHOD), ignoreCase = true) }
+        ?: PaymentMethod.OFFLINE,
+    note = getString(FirestorePaths.Payment.NOTE).orEmpty(),
+    paidOn = getString(FirestorePaths.Payment.PAID_ON).toLocalDate(),
+    recordedBy = getString(FirestorePaths.Payment.RECORDED_BY).orEmpty(),
+    createdAtMillis = getTimestamp(FirestorePaths.Payment.CREATED_AT)?.toDate()?.time,
+    reversesPaymentId = getString(FirestorePaths.Payment.REVERSES_PAYMENT_ID),
+    emailStatus = EmailStatus.entries.firstOrNull { it.name.equals(getString(FirestorePaths.Payment.EMAIL_STATUS), ignoreCase = true) }
+        ?: EmailStatus.PENDING,
+    waitingToSync = metadata.hasPendingWrites(),
+)
+
+internal fun DocumentSnapshot.toExpense(): Expense = Expense(
+    id = id,
+    title = getString(FirestorePaths.Expense.TITLE).orEmpty(),
+    amount = getLong(FirestorePaths.Expense.AMOUNT) ?: 0L,
+    date = getString(FirestorePaths.Expense.DATE).toLocalDate(),
+    description = getString(FirestorePaths.Expense.DESCRIPTION).orEmpty(),
+    paidByMemberId = getString(FirestorePaths.Expense.PAID_BY_MEMBER_ID),
+    recordedBy = getString(FirestorePaths.Expense.RECORDED_BY).orEmpty(),
+    createdAtMillis = getTimestamp(FirestorePaths.Expense.CREATED_AT)?.toDate()?.time,
+    waitingToSync = metadata.hasPendingWrites(),
 )

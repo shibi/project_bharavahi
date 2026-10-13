@@ -18,6 +18,7 @@ import com.bharavahi.core.domain.usecase.event.RemoveEventMemberUseCase
 import com.bharavahi.core.domain.usecase.event.SetEventMemberRoleUseCase
 import com.bharavahi.core.domain.usecase.event.SetEventStatusUseCase
 import com.bharavahi.core.domain.usecase.event.UpdateEventRolesUseCase
+import com.bharavahi.core.domain.usecase.payment.BuildWhatsAppMessageUseCase
 import com.bharavahi.core.domain.usecase.schedule.ObserveSchedulesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -31,6 +32,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 import javax.inject.Inject
 
 data class EventDetailUiState(
@@ -63,6 +65,7 @@ class EventDetailViewModel @Inject constructor(
     private val updateEventRoles: UpdateEventRolesUseCase,
     private val setEventMemberRole: SetEventMemberRoleUseCase,
     private val removeEventMember: RemoveEventMemberUseCase,
+    private val buildWhatsApp: BuildWhatsAppMessageUseCase,
 ) : ViewModel() {
 
     val eventId: String = checkNotNull(savedStateHandle["eventId"])
@@ -92,6 +95,9 @@ class EventDetailViewModel @Inject constructor(
     }
 
     fun dismissError() { actionError.value = null }
+
+    /** ORG-31. */
+    suspend fun whatsAppText(): Result<String> = buildWhatsApp(eventId, LocalDate.now())
 
     fun setStatus(status: EventStatus) = launchAction { setEventStatus(eventId, status) }
 

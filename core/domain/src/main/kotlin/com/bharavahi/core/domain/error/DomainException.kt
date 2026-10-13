@@ -16,6 +16,11 @@ sealed class DomainException(message: String? = null, cause: Throwable? = null) 
 
     /** A member with payments in an event can't be removed from it; history must stay intact. */
     class MemberHasPayments : DomainException()
+    /** ORG-25: this payment was already reversed, or is itself a reversal. */
+    class AlreadyReversed : DomainException()
+
+    /** Mail settings are missing in the Super Admin app, so backup emails can't be sent. */
+    class MailNotConfigured : DomainException()
     class Network(cause: Throwable? = null) : DomainException(cause = cause)
     class Unknown(cause: Throwable? = null) : DomainException(cause?.message, cause)
 }
@@ -23,9 +28,11 @@ sealed class DomainException(message: String? = null, cause: Throwable? = null) 
 enum class Field {
     NAME, TYPE, ADDRESS, PHONE, EMAIL, PASSWORD, ADMIN_NAME, ADMIN_EMAIL, ADMIN_PHONE, SENDER_EMAIL, APP_PASSWORD,
     NICKNAME, DESCRIPTION, START_DATE, END_DATE, OPENING_BALANCE, AMOUNT, NUMBER_OF_DUES, ROLE_NAME,
+    MEMBER, EVENT, SCHEDULE, DUE, TITLE, DATE,
 }
 
 enum class ValidationError {
     REQUIRED, INVALID_EMAIL, INVALID_PHONE, PASSWORD_TOO_SHORT,
     INVALID_AMOUNT, INVALID_COUNT, END_BEFORE_START, DUPLICATE, AMOUNT_TOO_SMALL,
+    AMOUNT_TOO_LARGE, DUE_ALREADY_PAID,
 }
