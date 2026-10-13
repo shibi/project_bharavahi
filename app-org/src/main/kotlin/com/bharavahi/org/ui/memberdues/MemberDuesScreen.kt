@@ -13,7 +13,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -46,6 +45,8 @@ import com.bharavahi.core.ui.components.formatRupees
 import com.bharavahi.core.ui.components.messageRes
 import com.bharavahi.org.R
 import com.bharavahi.org.ui.common.BackTopBar
+import com.bharavahi.org.ui.common.HeroStatTile
+import com.bharavahi.org.ui.common.InitialsAvatar
 import com.bharavahi.org.ui.common.SectionTitle
 import com.bharavahi.org.ui.common.color
 import com.bharavahi.org.ui.common.labelRes
@@ -132,28 +133,42 @@ private fun Content(detail: MemberDuesDetail, modifier: Modifier, onReverse: (Pa
                 onReverse = if (payment.isReversal || payment.id in reversed) null else ({ onReverse(payment) }),
                 onResend = null,
             )
-            HorizontalDivider()
         }
     }
 }
 
+/** Teal hero card (design): who, where they stand and the pending amount, with figures as tiles. */
 @Composable
 private fun Summary(detail: MemberDuesDetail) {
     val d = detail.dues
     Card(
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary,
+        ),
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(detail.event.name, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                InitialsAvatar(d.member.name)
+                Column(Modifier.weight(1f)) {
+                    Text(d.member.name, style = MaterialTheme.typography.titleLarge)
+                    Text(
+                        listOfNotNull(detail.event.roleName(d.member.roleId), detail.event.name).joinToString(" · "),
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
                 StatusBadge(stringResource(d.currentStatus.labelRes()), d.currentStatus.color())
             }
-            detail.event.roleName(d.member.roleId)?.let { Text(it) }
-            Text(stringResource(R.string.dues_row_amounts, formatRupees(d.totalPaid), formatRupees(d.dueSoFar), formatRupees(d.pending)))
-            Text(stringResource(R.string.member_dues_event_total, formatRupees(d.eventTotal)))
+            Text(stringResource(R.string.member_dues_pending_label), style = MaterialTheme.typography.labelMedium)
+            Text(formatRupees(d.pending), style = MaterialTheme.typography.headlineMedium)
             if (d.overdueCount > 0) {
-                Text(stringResource(R.string.dues_row_overdue, d.overdueCount), color = MaterialTheme.colorScheme.error)
+                Text(stringResource(R.string.dues_row_overdue, d.overdueCount), style = MaterialTheme.typography.bodySmall)
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                HeroStatTile(stringResource(R.string.member_dues_paid_label), formatRupees(d.totalPaid), Modifier.weight(1f))
+                HeroStatTile(stringResource(R.string.member_dues_due_so_far_label), formatRupees(d.dueSoFar), Modifier.weight(1f))
+                HeroStatTile(stringResource(R.string.member_dues_total_label), formatRupees(d.eventTotal), Modifier.weight(1f))
             }
         }
     }

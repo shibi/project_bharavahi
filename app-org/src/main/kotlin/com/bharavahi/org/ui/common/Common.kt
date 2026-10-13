@@ -3,7 +3,9 @@ package com.bharavahi.org.ui.common
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
@@ -70,6 +72,19 @@ fun TabTopBar(title: String, actions: @Composable () -> Unit = {}) {
 @Composable
 fun SectionTitle(text: String, modifier: Modifier = Modifier) {
     Text(text, style = MaterialTheme.typography.titleMedium, modifier = modifier.padding(top = 12.dp, bottom = 4.dp))
+}
+
+/** Translucent tile for figures on a teal hero card (design: stat grid). */
+@Composable
+fun HeroStatTile(label: String, value: String, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .background(MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.12f), RoundedCornerShape(12.dp))
+            .padding(12.dp),
+    ) {
+        Text(label, style = MaterialTheme.typography.labelMedium)
+        Text(value, style = MaterialTheme.typography.titleMedium)
+    }
 }
 
 /** Round avatar with the member's initials (design: member and payment rows). */

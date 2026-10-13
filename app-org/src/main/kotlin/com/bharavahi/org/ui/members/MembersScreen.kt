@@ -1,6 +1,5 @@
 package com.bharavahi.org.ui.members
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -14,15 +13,16 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.Card
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -35,6 +35,7 @@ import com.bharavahi.core.ui.components.MessageContent
 import com.bharavahi.core.ui.components.StatusBadge
 import com.bharavahi.core.ui.components.messageRes
 import com.bharavahi.org.R
+import com.bharavahi.org.ui.common.InitialsAvatar
 import com.bharavahi.org.ui.common.TabTopBar
 import com.bharavahi.org.ui.common.color
 import com.bharavahi.org.ui.common.labelRes
@@ -93,7 +94,6 @@ fun MembersScreen(
                 else -> LazyColumn {
                     items(state.visible, key = Member::id) { member ->
                         MemberRow(member, onClick = { onOpenMember(member.id) })
-                        HorizontalDivider()
                     }
                 }
             }
@@ -101,17 +101,24 @@ fun MembersScreen(
     }
 }
 
+/** Design: member card with initials avatar, contact line and status pill. */
 @Composable
 private fun MemberRow(member: Member, onClick: () -> Unit) {
-    val nickname = member.nickname.takeIf { it.isNotBlank() }?.let { " ($it)" }.orEmpty()
-    ListItem(
-        headlineContent = { Text(member.name + nickname) },
-        supportingContent = if (member.phone.isNotBlank()) {
-            { Text(member.phone) }
-        } else {
-            null
-        },
-        trailingContent = { StatusBadge(stringResource(member.status.labelRes()), member.status.color()) },
-        modifier = Modifier.clickable(onClick = onClick),
-    )
+    Card(onClick = onClick, modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp)) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.padding(16.dp),
+        ) {
+            InitialsAvatar(member.name)
+            Column(Modifier.weight(1f)) {
+                Text(member.name, style = MaterialTheme.typography.titleMedium)
+                val detail = listOf(member.nickname, member.phone).filter { it.isNotBlank() }.joinToString(" · ")
+                if (detail.isNotEmpty()) {
+                    Text(detail, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+            StatusBadge(stringResource(member.status.labelRes()), member.status.color())
+        }
+    }
 }
