@@ -31,6 +31,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.MoreVert
@@ -63,6 +65,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -70,6 +73,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bharavahi.core.domain.model.Event
 import com.bharavahi.core.domain.model.EventMember
 import com.bharavahi.core.domain.model.EventStatus
+import com.bharavahi.core.domain.model.Expense
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextOverflow
+import java.time.format.DateTimeFormatter
 import com.bharavahi.core.domain.model.Schedule
 import com.bharavahi.core.ui.components.ConfirmDialog
 import com.bharavahi.core.ui.components.LoadingContent
@@ -98,6 +107,7 @@ fun EventDetailScreen(
     onOpenDues: (eventId: String) -> Unit,
     onOpenPayments: (eventId: String) -> Unit,
     onOpenExpenses: (eventId: String) -> Unit,
+    onAddExpense: (eventId: String) -> Unit,
     viewModel: EventDetailViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -161,19 +171,44 @@ fun EventDetailScreen(
                 }
 
                 item {
-                    SectionHeader(stringResource(R.string.event_schedules), stringResource(R.string.schedule_add)) {
-                        onAddSchedule(event.id)
-                    }
+                    SectionHeader(
+                        title = stringResource(R.string.event_schedules),
+                        actionLabel = stringResource(R.string.schedule_add),
+                        count = state.schedules.size,
+                    ) { onAddSchedule(event.id) }
                 }
                 if (state.schedules.isEmpty()) {
                     item { HelpText(stringResource(R.string.event_no_schedules)) }
                 }
                 items(state.schedules, key = { "s-${it.id}" }) { schedule ->
-                    ScheduleCard(schedule, onClick = { onOpenSchedule(event.id, schedule.id) })
+                    ScheduleCard(
+                        schedule = schedule,
+                        members = state.members,
+                        onClick = { onOpenSchedule(event.id, schedule.id) },
+                    )
                 }
 
                 item {
-                    SectionHeader(stringResource(R.string.event_roles), stringResource(R.string.roles_edit), viewModel::openRolesDialog)
+                    SectionHeader(
+                        title = stringResource(R.string.event_recent_expenses),
+                        actionLabel = stringResource(R.string.expense_add),
+                        count = state.expenses.size,
+                    ) { onAddExpense(event.id) }
+                    if (state.expenses.isEmpty()) {
+                        HelpText(stringResource(R.string.expenses_empty))
+                    } else {
+                        RecentExpensesCard(
+                            expenses = state.expenses,
+                            members = state.members,
+                            onClick = { onOpenExpenses(event.id) },
+                        )
+                    }
+                }
+
+                item {
+                    SectionHeader(stringResource(R.string.event_roles), stringResource(R.string.roles_edit)) {
+                        viewModel.openRolesDialog()
+                    }
                     RoleChips(event, state.members)
                 }
 
@@ -338,11 +373,35 @@ private fun StatTile(labelRes: Int, paise: Long, accent: Color?, modifier: Modif
 }
 
 
+/** Design: bold teal title with an optional muted count, and an amber "+ action" link on the right. */
 @Composable
-private fun SectionHeader(title: String, actionLabel: String, onAction: () -> Unit) {
+private fun SectionHeader(title: String, actionLabel: String, count: Int? = null, onAction: () -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
-        SectionTitle(title, Modifier.weight(1f))
-        TextButton(onClick = onAction) { Text(actionLabel) }
+        Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(
+                title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+            )
+            if (count != null) {
+                Text(
+                    "($count)",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.outline,
+                )
+            }
+        }
+        TextButton(onClick = onAction, contentPadding = PaddingValues(horizontal = 8.dp)) {
+            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.tertiary)
+            Text(
+                actionLabel,
+                modifier = Modifier.padding(start = 4.dp),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.tertiary,
+            )
+        }
     }
 }
 
@@ -351,19 +410,33 @@ private fun HelpText(text: String) {
     Text(text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
 }
 
+/**
+ * Design: white 20dp card with name and per-member dues, a lock pill, the date range with a calendar
+ * icon and a collection-progress bar (collected so far against amount per member times members).
+ */
 @Composable
-private fun ScheduleCard(schedule: Schedule, onClick: () -> Unit) {
+private fun ScheduleCard(schedule: Schedule, members: List<EventMember>, onClick: () -> Unit) {
+    val collected = members.sumOf { member ->
+        (1..schedule.numberOfDues).sumOf { member.paidOn(schedule.id, it) }
+    }
+    val target = schedule.amountPerMember * members.size
+    val progress = if (target > 0) (collected.toFloat() / target).coerceIn(0f, 1f) else 0f
     Card(
         onClick = onClick,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         shape = RoundedCornerShape(20.dp),
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Row(verticalAlignment = Alignment.Top) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Column(Modifier.weight(1f)) {
-                    Text(schedule.name, style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        schedule.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                    )
                     Text(
                         stringResource(
                             R.string.schedule_per_member_dues,
@@ -371,30 +444,206 @@ private fun ScheduleCard(schedule: Schedule, onClick: () -> Unit) {
                             schedule.numberOfDues,
                         ),
                         style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 2.dp),
                     )
                 }
                 if (schedule.locked) {
-                    Text(
-                        stringResource(R.string.schedule_locked_short),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.tertiary,
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
                         modifier = Modifier
                             .background(MaterialTheme.colorScheme.tertiaryContainer, CircleShape)
                             .padding(horizontal = 10.dp, vertical = 4.dp),
+                    ) {
+                        Icon(
+                            Icons.Default.Lock,
+                            contentDescription = null,
+                            modifier = Modifier.size(13.dp),
+                            tint = MaterialTheme.colorScheme.tertiary,
+                        )
+                        Text(
+                            stringResource(R.string.schedule_locked_short),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.tertiary,
+                        )
+                    }
+                }
+            }
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(
+                    Icons.Default.CalendarToday,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                    tint = MaterialTheme.colorScheme.outline,
+                )
+                Text(
+                    formatDate(schedule.startDate) + " – " + formatDate(schedule.endDate),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.outline,
+                )
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        stringResource(R.string.schedule_collection_progress),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Text(
+                        stringResource(R.string.schedule_percent_collected, (progress * 100).roundToInt()),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .height(8.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
+                ) {
+                    if (progress > 0f) {
+                        Box(
+                            Modifier
+                                .fillMaxWidth(progress)
+                                .fillMaxHeight()
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.secondary),
+                        )
+                    }
+                }
+                Row(Modifier.fillMaxWidth()) {
+                    Text(
+                        stringResource(R.string.schedule_amount_collected, formatRupees(collected)),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.outline,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Text(
+                        stringResource(R.string.schedule_target, formatRupees(target)),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.outline,
                     )
                 }
             }
-            Text(
-                formatDate(schedule.startDate) + " – " + formatDate(schedule.endDate),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.outline,
-            )
         }
     }
 }
 
-/** Design: committee roles as chips pairing the role with the member who holds it. */
+private const val RECENT_EXPENSE_LIMIT = 3
+private val SHORT_DATE: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMM")
+
+/**
+ * Design: the latest expenses in one white 20dp card, rows split by hairline dividers. Each row has a
+ * round icon, the title, "Paid by <name> · <date>", the amount in red and a sync note when pending.
+ */
+@Composable
+private fun RecentExpensesCard(expenses: List<Expense>, members: List<EventMember>, onClick: () -> Unit) {
+    val recent = expenses
+        .sortedWith(compareByDescending<Expense> { it.date }.thenByDescending { it.createdAtMillis })
+        .take(RECENT_EXPENSE_LIMIT)
+    Card(
+        onClick = onClick,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(20.dp),
+        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+    ) {
+        recent.forEachIndexed { index, expense ->
+            if (index > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+            ExpenseRow(expense, payer = members.firstOrNull { it.memberId == expense.paidByMemberId }?.name)
+        }
+    }
+}
+
+@Composable
+private fun ExpenseRow(expense: Expense, payer: String?) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier.fillMaxWidth().padding(12.dp),
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)),
+        ) {
+            Icon(
+                Icons.AutoMirrored.Filled.ReceiptLong,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp),
+                tint = MaterialTheme.colorScheme.primary,
+            )
+        }
+        Column(Modifier.weight(1f)) {
+            Text(
+                expense.title,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            val date = expense.date?.format(SHORT_DATE).orEmpty()
+            val subtitle = if (payer != null) {
+                val text = stringResource(R.string.expense_paid_by_on, payer, date)
+                val start = text.indexOf(payer)
+                buildAnnotatedString {
+                    append(text)
+                    if (start >= 0) {
+                        addStyle(
+                            SpanStyle(fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant),
+                            start,
+                            start + payer.length,
+                        )
+                    }
+                }
+            } else {
+                AnnotatedString(date)
+            }
+            if (subtitle.isNotEmpty()) {
+                Text(
+                    subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.outline,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+        Column(horizontalAlignment = Alignment.End) {
+            Text(
+                "-" + formatRupees(expense.amount),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.error,
+            )
+            if (expense.waitingToSync) {
+                Text(
+                    stringResource(R.string.payment_waiting_to_sync),
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = LocalStatusColors.current.partlyPaid,
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Design: committee roles as chips pairing the role with the member who holds it.
+ * A role held by several members collapses into one chip showing how many hold it.
+ */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun RoleChips(event: Event, members: List<EventMember>) {
@@ -405,17 +654,27 @@ private fun RoleChips(event: Event, members: List<EventMember>) {
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         event.roles.forEach { role ->
             val holders = members.filter { it.roleId == role.id }
-            if (holders.isEmpty()) {
-                RoleChip(role.name, null)
-            } else {
-                holders.forEach { RoleChip(role.name, it.name) }
+            when (holders.size) {
+                0 -> RoleChip(role.name, avatar = null, holder = null)
+                1 -> {
+                    val name = holders.single().name
+                    RoleChip(role.name, avatar = initials(name), holder = name)
+                }
+                else -> RoleChip(
+                    role.name,
+                    avatar = holders.size.toString(),
+                    holder = pluralStringResource(R.plurals.event_role_member_count, holders.size, holders.size),
+                )
             }
         }
     }
 }
 
+private fun initials(name: String): String =
+    name.trim().split(Regex("\\s+")).filter { it.isNotEmpty() }.take(2).joinToString("") { it.first().uppercase() }
+
 @Composable
-private fun RoleChip(role: String, holder: String?) {
+private fun RoleChip(role: String, avatar: String?, holder: String?) {
     Row(
         Modifier
             .background(MaterialTheme.colorScheme.surface, CircleShape)
@@ -424,13 +683,13 @@ private fun RoleChip(role: String, holder: String?) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        if (holder != null) {
+        if (avatar != null) {
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier.size(24.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary),
             ) {
                 Text(
-                    holder.trim().split(Regex("\\s+")).take(2).joinToString("") { it.first().uppercase() },
+                    avatar,
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onPrimary,
                 )

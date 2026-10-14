@@ -37,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.bharavahi.core.domain.error.ValidationError
 import com.bharavahi.core.domain.model.DueStatus
@@ -112,14 +113,20 @@ fun HeroStatTile(label: String, value: String, modifier: Modifier = Modifier) {
 
 /** Round avatar with the member's initials (design: member and payment rows). */
 @Composable
-fun InitialsAvatar(name: String, modifier: Modifier = Modifier) {
+fun InitialsAvatar(
+    name: String,
+    modifier: Modifier = Modifier,
+    containerColor: Color = MaterialTheme.colorScheme.tertiaryContainer,
+    contentColor: Color = MaterialTheme.colorScheme.onTertiaryContainer,
+    size: Dp = 40.dp,
+) {
     val initials = name.trim().split(Regex("\\s+")).filter { it.isNotEmpty() }
         .take(2).joinToString("") { it.first().uppercase() }
     Box(
         contentAlignment = Alignment.Center,
-        modifier = modifier.size(40.dp).clip(CircleShape).background(MaterialTheme.colorScheme.tertiaryContainer),
+        modifier = modifier.size(size).clip(CircleShape).background(containerColor),
     ) {
-        Text(initials, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onTertiaryContainer)
+        Text(initials, style = MaterialTheme.typography.labelLarge, color = contentColor)
     }
 }
 

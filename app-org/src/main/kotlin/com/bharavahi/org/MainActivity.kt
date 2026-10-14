@@ -12,6 +12,7 @@ import com.bharavahi.core.ui.components.LoadingContent
 import com.bharavahi.core.ui.theme.BharavahiTheme
 import com.bharavahi.core.ui.theme.TealOrangePalette
 import com.bharavahi.org.navigation.OrgNavHost
+import com.bharavahi.org.ui.theme.OrgTypography
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -26,7 +27,7 @@ class MainActivity : ComponentActivity() {
             val session by appViewModel.session.collectAsStateWithLifecycle()
             val themeMode by appViewModel.themeMode.collectAsStateWithLifecycle()
 
-            BharavahiTheme(palette = TealOrangePalette, mode = themeMode) {
+            BharavahiTheme(palette = TealOrangePalette, mode = themeMode, typography = OrgTypography) {
                 when (val state = session) {
                     AdminSessionState.Loading -> LoadingContent()
                     else -> OrgNavHost(signedIn = state is AdminSessionState.SignedIn)

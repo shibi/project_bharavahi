@@ -15,6 +15,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -24,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -42,7 +46,10 @@ fun LoginScreen(viewModel: LoginViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     // Design (Stitch): centered brand emblem and title, with the form in a bordered white card below.
-    Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+    // Stitch tints the page light blue so the white card stands out.
+    val pageColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.06f)
+        .compositeOver(MaterialTheme.colorScheme.background)
+    Surface(Modifier.fillMaxSize(), color = pageColor) {
         Column(
             modifier = Modifier
                 .safeDrawingPadding()
@@ -107,6 +114,8 @@ fun LoginScreen(viewModel: LoginViewModel = hiltViewModel()) {
                     label = stringResource(R.string.login_email),
                     error = state.fieldErrors[Field.EMAIL],
                     keyboardType = KeyboardType.Email,
+                    leadingIcon = Icons.Filled.Email,
+                    labelAbove = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 FormTextField(
@@ -115,6 +124,8 @@ fun LoginScreen(viewModel: LoginViewModel = hiltViewModel()) {
                     label = stringResource(R.string.login_password),
                     error = state.fieldErrors[Field.PASSWORD],
                     keyboardType = KeyboardType.Password,
+                    leadingIcon = Icons.Filled.Lock,
+                    labelAbove = true,
                     imeAction = ImeAction.Done,
                     isPassword = true,
                     modifier = Modifier.fillMaxWidth(),

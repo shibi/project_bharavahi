@@ -22,6 +22,7 @@ data class MembersUiState(
     val statusFilter: MemberStatus? = MemberStatus.ACTIVE,
     val loading: Boolean = true,
     val totalCount: Int = 0,
+    val statusCounts: Map<MemberStatus, Int> = emptyMap(),
     val visible: List<Member> = emptyList(),
     val error: Throwable? = null,
 )
@@ -51,6 +52,7 @@ class MembersViewModel @Inject constructor(
                 statusFilter = status,
                 loading = false,
                 totalCount = all.size,
+                statusCounts = all.groupingBy { it.status }.eachCount(),
                 visible = ObserveMembersUseCase.filter(all, q, status),
                 error = result.exceptionOrNull(),
             )

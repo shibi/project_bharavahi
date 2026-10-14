@@ -175,6 +175,7 @@ fun OrgNavHost(
                     onOpenDues = { navController.navigate(EventDuesRoute(it)) },
                     onOpenPayments = { navController.navigate(PaymentsRoute(it)) },
                     onOpenExpenses = { navController.navigate(ExpensesRoute(it)) },
+                    onAddExpense = { navController.navigate(AddExpenseRoute(it)) },
                 )
             }
             composable<AddEventMembersRoute> {

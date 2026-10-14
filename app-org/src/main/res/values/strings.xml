@@ -283,6 +283,16 @@
     <string name="event_share_outflow">%1$d%% outflow</string>
     <string name="schedule_per_member_dues">%1$s × %2$d dues per member</string>
     <string name="schedule_locked_short">Locked · Payments exist</string>
+    <string name="schedule_collection_progress">Collection progress</string>
+    <string name="schedule_percent_collected">%1$d%% collected</string>
+    <string name="schedule_amount_collected">%1$s collected</string>
+    <string name="schedule_target">Target: %1$s</string>
+    <string name="event_recent_expenses">Recent Expenses</string>
+    <string name="expense_paid_by_on">Paid by %1$s · %2$s</string>
+    <plurals name="event_role_member_count">
+        <item quantity="one">%1$d member</item>
+        <item quantity="other">%1$d members</item>
+    </plurals>
     <string name="event_opening_balance_short">Opening balance</string>
     <string name="dues_showing">Showing %1$d members</string>
     <string name="dues_total_pending">Total %1$s due</string>
