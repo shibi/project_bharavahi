@@ -80,6 +80,8 @@
     <string name="event_status_archived">Archived</string>
     <string name="event_status_closed">Closed</string>
     <string name="event_dates">%1$s to %2$s</string>
+    <string name="event_collected_short">Collected %1$s</string>
+    <string name="event_balance_short">Balance %1$s</string>
     <string name="event_form_create_title">Create event</string>
     <string name="event_form_edit_title">Edit event</string>
     <string name="event_form_step">Step %1$d of %2$d: %3$s</string>
