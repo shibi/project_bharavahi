@@ -16,6 +16,7 @@ fun Throwable.messageRes(): Int = when (this) {
     is DomainException.MemberHasPayments -> R.string.core_error_member_has_payments
     is DomainException.AlreadyReversed -> R.string.core_error_already_reversed
     is DomainException.MailNotConfigured -> R.string.core_error_mail_not_configured
+    is DomainException.AdminLimitReached -> R.string.core_error_admin_limit
     is DomainException.Network -> R.string.core_error_network
     is DomainException.Validation -> R.string.core_error_validation
     else -> R.string.core_error_unknown

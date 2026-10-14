@@ -21,6 +21,9 @@ sealed class DomainException(message: String? = null, cause: Throwable? = null) 
 
     /** Mail settings are missing in the Super Admin app, so backup emails can't be sent. */
     class MailNotConfigured : DomainException()
+
+    /** ORG-4: a community already has the maximum number of active admins. */
+    class AdminLimitReached : DomainException()
     class Network(cause: Throwable? = null) : DomainException(cause = cause)
     class Unknown(cause: Throwable? = null) : DomainException(cause?.message, cause)
 }

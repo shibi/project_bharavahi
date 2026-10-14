@@ -18,5 +18,6 @@ enum class ActivityAction {
     ORG_DELETED,
     ADMIN_ACTIVATED,
     ADMIN_DEACTIVATED,
+    ADMIN_ADDED,
     UNKNOWN,
 }

@@ -56,6 +56,7 @@ fun ActivityAction.labelRes(): Int = when (this) {
     ActivityAction.ORG_DELETED -> R.string.activity_org_deleted
     ActivityAction.ADMIN_ACTIVATED -> R.string.activity_admin_activated
     ActivityAction.ADMIN_DEACTIVATED -> R.string.activity_admin_deactivated
+    ActivityAction.ADMIN_ADDED -> R.string.activity_admin_added
     ActivityAction.UNKNOWN -> R.string.activity_unknown
 }
 

@@ -12,6 +12,7 @@ import com.bharavahi.core.domain.model.SessionState
 import com.bharavahi.core.domain.repository.ActivityRepository
 import com.bharavahi.core.domain.repository.AdminAccountGateway
 import com.bharavahi.core.domain.repository.AuthRepository
+import com.bharavahi.core.domain.repository.OrgAdminRepository
 import com.bharavahi.core.domain.repository.OrganizationRepository
 import com.bharavahi.core.domain.repository.PendingLogin
 import com.bharavahi.core.domain.repository.SuperAdminRepository
@@ -73,6 +74,22 @@ class FakeOrganizationRepository : OrganizationRepository {
     override suspend fun setStatus(orgId: String, status: OrganizationStatus) {
         val o = orgs.value[orgId] ?: throw DomainException.NotFound()
         orgs.value = orgs.value + (orgId to o.copy(status = status))
+    }
+}
+
+class FakeOrgAdminRepository(admins: List<OrgAdmin> = emptyList()) : OrgAdminRepository {
+    val admins = MutableStateFlow(admins)
+    var failAdd = false
+
+    override fun observeAdmins(orgId: String): Flow<List<OrgAdmin>> = admins.map { list -> list.filter { it.orgId == orgId } }
+
+    override suspend fun setActive(orgId: String, uid: String, active: Boolean) {
+        admins.value = admins.value.map { if (it.uid == uid) it.copy(active = active) else it }
+    }
+
+    override suspend fun add(orgId: String, admin: OrgAdmin, addedBy: String) {
+        if (failAdd) throw DomainException.Network()
+        admins.value = admins.value + admin
     }
 }
 

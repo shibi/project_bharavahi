@@ -21,6 +21,9 @@ data class EventsUiState(
     val statusFilter: EventStatus? = null,
     val loading: Boolean = true,
     val totalCount: Int = 0,
+    val statusCounts: Map<EventStatus, Int> = emptyMap(),
+    /** Collected across every event of the community, for the summary card. */
+    val totalCollected: Long = 0L,
     val visible: List<Event> = emptyList(),
     val error: Throwable? = null,
 )
@@ -48,6 +51,8 @@ class EventsViewModel @Inject constructor(
                 statusFilter = status,
                 loading = false,
                 totalCount = all.size,
+                statusCounts = all.groupingBy { it.status }.eachCount(),
+                totalCollected = all.sumOf { it.totalCollected },
                 visible = ObserveEventsUseCase.filter(all, status),
                 error = result.exceptionOrNull(),
             )

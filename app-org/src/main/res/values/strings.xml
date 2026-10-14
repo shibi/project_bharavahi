@@ -172,6 +172,40 @@
     <string name="theme_light">Light</string>
     <string name="theme_dark">Dark</string>
     <string name="profile_sign_out">Sign out</string>
+    <string name="profile_admin_badge">Admin</string>
+    <string name="profile_preferences">App Preferences</string>
+    <string name="profile_appearance">Appearance Theme</string>
+    <string name="profile_version">%1$s v%2$s</string>
+    <string name="profile_phone">Mobile number</string>
+    <string name="events_active_badge">%1$d Active</string>
+    <string name="events_total_funds">Total Event Funds</string>
+    <string name="events_collected_suffix">collected</string>
+    <string name="events_tile_collected">Collected</string>
+    <string name="events_tile_spent">Spent</string>
+    <string name="events_tile_balance">Balance</string>
+    <string name="events_tile_opening">Opening %1$s</string>
+    <string name="events_tile_in_hand">In hand</string>
+    <string name="events_inline_amount">%1$s:</string>
+    <string name="coadmins_title">Co-admins</string>
+    <string name="coadmins_active_count">(%1$d of %2$d active admins)</string>
+    <plurals name="coadmins_slots_open">
+        <item quantity="one">%1$d slot open</item>
+        <item quantity="other">%1$d slots open</item>
+    </plurals>
+    <string name="coadmins_add">Add co-admin</string>
+    <string name="coadmins_max">(Max %1$d)</string>
+    <string name="coadmins_inactive">Inactive</string>
+    <string name="coadmins_activate">Activate</string>
+    <string name="coadmins_deactivate">Deactivate</string>
+    <string name="coadmins_deactivate_title">Deactivate co-admin?</string>
+    <string name="coadmins_deactivate_confirm">%1$s will be signed out and can\'t use the app until reactivated.</string>
+    <string name="coadmins_help">Co-admins sign in to this app with their own email and password.</string>
+    <string name="coadmins_name">Name</string>
+    <string name="coadmins_email">Email</string>
+    <string name="coadmins_phone">Mobile number (optional)</string>
+    <string name="coadmins_password">Temporary password</string>
+    <string name="coadmins_password_help">Share it with them. They sign in with it.</string>
+    <string name="coadmins_create">Add</string>
 
     <!-- Stage 2: payments, dues, expenses -->
     <string name="done">Done</string>

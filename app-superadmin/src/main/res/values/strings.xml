@@ -81,6 +81,7 @@
     <string name="activity_org_deleted">Deleted</string>
     <string name="activity_admin_activated">Admin activated</string>
     <string name="activity_admin_deactivated">Admin deactivated</string>
+    <string name="activity_admin_added">Admin added</string>
     <string name="activity_unknown">Change</string>
     <string name="activity_pending_time">Just now</string>
 

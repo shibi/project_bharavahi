@@ -2,6 +2,7 @@ package com.bharavahi.core.data.firebase
 
 import com.bharavahi.core.domain.model.OrgAdmin
 import com.bharavahi.core.domain.repository.OrgAdminRepository
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.snapshots
 import kotlinx.coroutines.flow.Flow
@@ -31,6 +32,31 @@ internal class FirestoreOrgAdminRepository @Inject constructor(
                 active,
             )
             update(db.collection(FirestorePaths.ADMIN_INDEX).document(uid), FirestorePaths.Index.ACTIVE, active)
+        }.commit().await()
+        Unit
+    }
+
+    override suspend fun add(orgId: String, admin: OrgAdmin, addedBy: String) = firebaseCall {
+        db.batch().apply {
+            set(
+                db.collection(FirestorePaths.ORGANIZATIONS).document(orgId)
+                    .collection(FirestorePaths.ADMINS).document(admin.uid),
+                mapOf(
+                    FirestorePaths.Admin.NAME to admin.name,
+                    FirestorePaths.Admin.EMAIL to admin.email,
+                    FirestorePaths.Admin.PHONE to admin.phone,
+                    FirestorePaths.Admin.ACTIVE to true,
+                    FirestorePaths.Admin.ADDED_AT to FieldValue.serverTimestamp(),
+                    FirestorePaths.Admin.ADDED_BY to addedBy,
+                ),
+            )
+            set(
+                db.collection(FirestorePaths.ADMIN_INDEX).document(admin.uid),
+                mapOf(
+                    FirestorePaths.Index.ORG_ID to orgId,
+                    FirestorePaths.Index.ACTIVE to true,
+                ),
+            )
         }.commit().await()
         Unit
     }
