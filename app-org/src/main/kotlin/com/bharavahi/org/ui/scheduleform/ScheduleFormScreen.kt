@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -34,6 +33,7 @@ import com.bharavahi.core.ui.components.formatDate
 import com.bharavahi.core.ui.components.formatRupees
 import com.bharavahi.core.ui.components.messageRes
 import com.bharavahi.org.R
+import com.bharavahi.org.ui.common.AccentButton
 import com.bharavahi.org.ui.common.BackTopBar
 import com.bharavahi.org.ui.common.DateField
 import com.bharavahi.org.ui.common.SectionTitle
@@ -56,7 +56,7 @@ fun ScheduleFormScreen(
         topBar = { BackTopBar(title, onBack) },
         bottomBar = {
             if (!state.loading) {
-                Button(
+                AccentButton(
                     onClick = viewModel::save,
                     enabled = !state.saving && !state.locked,
                     modifier = Modifier.fillMaxWidth().imePadding().padding(16.dp).height(48.dp),

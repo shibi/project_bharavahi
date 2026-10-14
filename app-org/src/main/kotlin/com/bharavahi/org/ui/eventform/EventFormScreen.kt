@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -35,6 +34,7 @@ import com.bharavahi.core.ui.components.FormTextField
 import com.bharavahi.core.ui.components.LoadingContent
 import com.bharavahi.core.ui.components.messageRes
 import com.bharavahi.org.R
+import com.bharavahi.org.ui.common.AccentButton
 import com.bharavahi.org.ui.common.BackTopBar
 import com.bharavahi.org.ui.common.DateField
 import com.bharavahi.org.ui.eventmembers.memberRoleItems
@@ -209,7 +209,7 @@ private fun FormButtons(state: EventFormUiState, onBack: () -> Unit, onNext: () 
                 Text(stringResource(R.string.back))
             }
         }
-        Button(
+        AccentButton(
             onClick = if (last) onSave else onNext,
             enabled = !state.saving,
             modifier = Modifier.weight(1f).height(48.dp),
