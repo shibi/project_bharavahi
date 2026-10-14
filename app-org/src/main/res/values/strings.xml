@@ -80,8 +80,6 @@
     <string name="event_status_archived">Archived</string>
     <string name="event_status_closed">Closed</string>
     <string name="event_dates">%1$s to %2$s</string>
-    <string name="event_collected_short">Collected %1$s</string>
-    <string name="event_balance_short">Balance %1$s</string>
     <string name="event_form_create_title">Create event</string>
     <string name="event_form_edit_title">Edit event</string>
     <string name="event_form_step">Step %1$d of %2$d: %3$s</string>
@@ -101,6 +99,7 @@
     <string name="event_edit">Edit event</string>
     <string name="event_balance">Balance %1$s</string>
     <string name="event_total_collected">Collected</string>
+    <string name="event_balance_label">Balance</string>
     <string name="event_total_expenses">Expenses</string>
     <string name="event_schedules">Schedules</string>
     <string name="event_no_schedules">No schedules yet. Add one to split the amount each member owes into dues.</string>
@@ -153,6 +152,8 @@
     <string name="schedule_edit">Edit schedule</string>
     <string name="schedule_delete">Delete schedule</string>
     <string name="schedule_delete_confirm">Delete %1$s? This is only possible before any payment is marked.</string>
+    <string name="schedule_per_member">Per member</string>
+    <string name="schedule_dues_count">Dues</string>
     <string name="schedule_locked">Payments have been marked, so the dues are fixed.</string>
     <string name="schedule_unlocked">No payments yet. You can still edit or delete this schedule.</string>
     <string name="due_date">Due on %1$s</string>

@@ -47,6 +47,7 @@ import com.bharavahi.core.ui.components.formatRupees
 import com.bharavahi.core.ui.components.messageRes
 import com.bharavahi.org.R
 import com.bharavahi.org.ui.common.BackTopBar
+import com.bharavahi.org.ui.common.HeroStatTile
 import com.bharavahi.org.ui.common.color
 import com.bharavahi.org.ui.common.labelRes
 
@@ -123,26 +124,31 @@ fun ScheduleScreen(
     }
 }
 
+/** Teal hero card (design): per-member amount, number of dues, dates and lock state. */
 @Composable
 private fun Header(schedule: Schedule) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.padding(bottom = 8.dp)) {
-        if (schedule.description.isNotBlank()) Text(schedule.description)
-        Text(
-            stringResource(
-                R.string.schedule_summary,
-                formatRupees(schedule.amountPerMember),
-                schedule.numberOfDues,
-                formatDate(schedule.startDate),
-                formatDate(schedule.endDate),
-            ),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Text(
-            stringResource(if (schedule.locked) R.string.schedule_locked else R.string.schedule_unlocked),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary,
+        ),
+        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+    ) {
+        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (schedule.description.isNotBlank()) Text(schedule.description, style = MaterialTheme.typography.bodyMedium)
+            Text(
+                stringResource(R.string.event_dates, formatDate(schedule.startDate), formatDate(schedule.endDate)),
+                style = MaterialTheme.typography.bodySmall,
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                HeroStatTile(stringResource(R.string.schedule_per_member), formatRupees(schedule.amountPerMember), Modifier.weight(1f))
+                HeroStatTile(stringResource(R.string.schedule_dues_count), schedule.numberOfDues.toString(), Modifier.weight(1f))
+            }
+            Text(
+                stringResource(if (schedule.locked) R.string.schedule_locked else R.string.schedule_unlocked),
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
     }
 }
 

@@ -1,5 +1,6 @@
 package com.bharavahi.org.ui.dashboard
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,11 +11,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
@@ -25,6 +31,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -32,7 +39,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bharavahi.core.domain.model.Event
-import com.bharavahi.core.domain.model.EventStatus
 import com.bharavahi.core.domain.usecase.orgdashboard.EventProgress
 import com.bharavahi.core.domain.usecase.orgdashboard.OrgDashboard
 import com.bharavahi.core.domain.usecase.orgdashboard.RecentPayment
@@ -216,25 +222,44 @@ private fun GettingStarted(onCreateEvent: () -> Unit, onAddMember: () -> Unit) {
     }
 }
 
+/** Events list card (design): icon tile, name and dates, status pill, collected and balance. */
 @Composable
 fun EventSummaryCard(event: Event, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Card(onClick = onClick, modifier = modifier.fillMaxWidth()) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(event.name, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-                if (event.status != EventStatus.ACTIVE) {
-                    StatusBadge(stringResource(event.status.labelRes()), event.status.color())
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.size(40.dp).clip(CircleShape).background(MaterialTheme.colorScheme.tertiaryContainer),
+                ) {
+                    Icon(Icons.Default.CalendarMonth, contentDescription = null, tint = MaterialTheme.colorScheme.onTertiaryContainer)
                 }
+                Column(Modifier.weight(1f)) {
+                    Text(event.name, style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        stringResource(R.string.event_dates, formatDate(event.startDate), formatDate(event.endDate)),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                StatusBadge(stringResource(event.status.labelRes()), event.status.color())
             }
-            Text(
-                stringResource(R.string.event_dates, formatDate(event.startDate), formatDate(event.endDate)),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Row(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.padding(top = 4.dp)) {
-                Text(stringResource(R.string.event_collected_short, formatRupees(event.totalCollected)))
-                Text(stringResource(R.string.event_balance_short, formatRupees(event.balance)))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                AmountTile(stringResource(R.string.event_total_collected), formatRupees(event.totalCollected), Modifier.weight(1f))
+                AmountTile(stringResource(R.string.event_balance_label), formatRupees(event.balance), Modifier.weight(1f))
             }
         }
+    }
+}
+
+@Composable
+private fun AmountTile(label: String, value: String, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp))
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+    ) {
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(value, style = MaterialTheme.typography.titleSmall)
     }
 }
