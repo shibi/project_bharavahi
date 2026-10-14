@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -39,6 +38,7 @@ import com.bharavahi.core.ui.components.LoadingContent
 import com.bharavahi.core.ui.components.StatusBadge
 import com.bharavahi.core.ui.components.messageRes
 import com.bharavahi.org.R
+import com.bharavahi.org.ui.common.AccentButton
 import com.bharavahi.org.ui.common.BackTopBar
 import com.bharavahi.org.ui.common.SectionTitle
 import com.bharavahi.org.ui.common.color
@@ -80,7 +80,7 @@ fun MemberFormScreen(
             state.error?.let {
                 Text(stringResource(it.messageRes()), color = MaterialTheme.colorScheme.error)
             }
-            Button(
+            AccentButton(
                 onClick = viewModel::save,
                 enabled = !state.saving,
                 modifier = Modifier.fillMaxWidth().padding(top = 8.dp).height(48.dp),

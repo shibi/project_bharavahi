@@ -1,5 +1,7 @@
 package com.bharavahi.org.ui.profile
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -9,7 +11,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
@@ -26,6 +30,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bharavahi.core.domain.model.ThemeMode
 import com.bharavahi.org.R
+import com.bharavahi.org.ui.common.InitialsAvatar
 import com.bharavahi.org.ui.common.TabTopBar
 
 @Composable
@@ -39,22 +44,46 @@ fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text(stringResource(R.string.profile_signed_in_as), style = MaterialTheme.typography.labelLarge)
-            Text(email, style = MaterialTheme.typography.bodyLarge)
-
-            HorizontalDivider(Modifier.padding(vertical = 16.dp))
-
-            Text(stringResource(R.string.profile_theme), style = MaterialTheme.typography.titleMedium)
-            Column(Modifier.selectableGroup()) {
-                ThemeOption(ThemeMode.SYSTEM, R.string.theme_system, themeMode, viewModel::onThemeModeChange)
-                ThemeOption(ThemeMode.LIGHT, R.string.theme_light, themeMode, viewModel::onThemeModeChange)
-                ThemeOption(ThemeMode.DARK, R.string.theme_dark, themeMode, viewModel::onThemeModeChange)
+            // Design: teal hero card for the signed-in admin.
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                ),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.padding(20.dp),
+                ) {
+                    InitialsAvatar(email.substringBefore('@'))
+                    Column {
+                        Text(stringResource(R.string.profile_signed_in_as), style = MaterialTheme.typography.labelMedium)
+                        Text(email, style = MaterialTheme.typography.titleMedium)
+                    }
+                }
             }
 
-            HorizontalDivider(Modifier.padding(vertical = 16.dp))
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp)) {
+                    Text(stringResource(R.string.profile_theme), style = MaterialTheme.typography.titleMedium)
+                    Column(Modifier.selectableGroup()) {
+                        ThemeOption(ThemeMode.SYSTEM, R.string.theme_system, themeMode, viewModel::onThemeModeChange)
+                        ThemeOption(ThemeMode.LIGHT, R.string.theme_light, themeMode, viewModel::onThemeModeChange)
+                        ThemeOption(ThemeMode.DARK, R.string.theme_dark, themeMode, viewModel::onThemeModeChange)
+                    }
+                }
+            }
 
-            OutlinedButton(onClick = viewModel::signOut, modifier = Modifier.fillMaxWidth().height(48.dp)) {
+            OutlinedButton(
+                onClick = viewModel::signOut,
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.error),
+                modifier = Modifier.fillMaxWidth().height(48.dp),
+            ) {
                 Text(stringResource(R.string.profile_sign_out))
             }
         }

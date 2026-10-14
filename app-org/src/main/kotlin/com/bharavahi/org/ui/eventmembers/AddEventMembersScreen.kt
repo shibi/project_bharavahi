@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -26,6 +25,7 @@ import com.bharavahi.core.ui.components.LoadingContent
 import com.bharavahi.core.ui.components.MessageContent
 import com.bharavahi.core.ui.components.messageRes
 import com.bharavahi.org.R
+import com.bharavahi.org.ui.common.AccentButton
 import com.bharavahi.org.ui.common.BackTopBar
 
 @Composable
@@ -45,7 +45,7 @@ fun AddEventMembersScreen(
         topBar = { BackTopBar(stringResource(R.string.event_add_members), onBack) },
         bottomBar = {
             if (state.candidates.isNotEmpty()) {
-                Button(
+                AccentButton(
                     onClick = viewModel::save,
                     enabled = !state.saving && state.selected.isNotEmpty(),
                     modifier = Modifier.fillMaxWidth().padding(16.dp).height(48.dp),
