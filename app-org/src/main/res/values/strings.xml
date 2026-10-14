@@ -252,6 +252,15 @@
     <string name="expense_paid_by_none">Nobody selected</string>
     <string name="expense_paid_by">paid by %1$s</string>
     <string name="dashboard_total_collection">Total collection</string>
+    <string name="dashboard_view_all">View all</string>
+    <string name="dashboard_see_all">See all</string>
+    <string name="dashboard_ring_collected">collected</string>
+    <string name="dashboard_reversal">Reversal</string>
+    <string name="dashboard_share_reminder">Share reminder</string>
+    <plurals name="dashboard_reminder_text">
+        <item quantity="one">Reminder: %1$d member has dues pending in %2$s.</item>
+        <item quantity="other">Reminder: %1$d members have dues pending in %2$s.</item>
+    </plurals>
     <string name="dashboard_collect_dues">Collect dues</string>
     <string name="event_opening_balance_short">Opening balance</string>
     <string name="dues_showing">Showing %1$d members</string>

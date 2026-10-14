@@ -128,6 +128,8 @@ fun OrgNavHost(
                     onCreateEvent = { navController.navigate(CreateEventRoute) },
                     onAddMember = { navController.navigate(AddMemberRoute) },
                     onCollectDues = { navController.navigate(MarkPaymentRoute()) },
+                    onViewAllEvents = { navController.navigate(EventsRoute) { launchSingleTop = true } },
+                    onSeeAllPayments = { navController.navigate(PaymentsRoute(it)) },
                 )
             }
             composable<EventsRoute> {
