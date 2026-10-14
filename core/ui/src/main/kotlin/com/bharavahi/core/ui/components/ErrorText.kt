@@ -35,4 +35,5 @@ fun ValidationError.messageRes(): Int = when (this) {
     ValidationError.AMOUNT_TOO_SMALL -> R.string.core_validation_amount_too_small
     ValidationError.AMOUNT_TOO_LARGE -> R.string.core_validation_amount_too_large
     ValidationError.DUE_ALREADY_PAID -> R.string.core_validation_due_already_paid
+    ValidationError.FUTURE_DATE -> R.string.core_validation_future_date
 }

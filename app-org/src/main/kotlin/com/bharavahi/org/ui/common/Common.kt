@@ -16,10 +16,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -43,6 +46,7 @@ import com.bharavahi.core.domain.error.ValidationError
 import com.bharavahi.core.domain.model.DueStatus
 import com.bharavahi.core.domain.model.EmailStatus
 import com.bharavahi.core.domain.model.EventStatus
+import com.bharavahi.core.domain.model.Gender
 import com.bharavahi.core.domain.model.MemberStatus
 import com.bharavahi.core.domain.model.PaymentMethod
 import com.bharavahi.core.ui.components.formatDate
@@ -137,6 +141,13 @@ fun MemberStatus.labelRes(): Int = when (this) {
     MemberStatus.ARCHIVED -> R.string.member_status_archived
 }
 
+@StringRes
+fun Gender.labelRes(): Int = when (this) {
+    Gender.MALE -> R.string.gender_male
+    Gender.FEMALE -> R.string.gender_female
+    Gender.OTHER -> R.string.gender_other
+}
+
 @Composable
 fun MemberStatus.color(): Color = when (this) {
     MemberStatus.ACTIVE -> LocalStatusColors.current.paid
@@ -182,6 +193,8 @@ fun DateField(
     label: String,
     modifier: Modifier = Modifier,
     error: ValidationError? = null,
+    onClear: (() -> Unit)? = null,
+    maxDate: LocalDate? = null,
 ) {
     var open by remember { mutableStateOf(false) }
     Box(modifier) {
@@ -201,10 +214,27 @@ fun DateField(
             modifier = Modifier.fillMaxWidth(),
         )
         Box(Modifier.matchParentSize().clickable { open = true })
+        // Drawn over the click overlay so tapping it clears instead of opening the picker.
+        if (onClear != null && value != null) {
+            IconButton(
+                onClick = onClear,
+                // Centred on the 56dp field below the 8dp label gap, just left of the calendar icon.
+                modifier = Modifier.align(Alignment.TopEnd).padding(top = 12.dp, end = 40.dp),
+            ) {
+                Icon(Icons.Default.Clear, contentDescription = stringResource(R.string.clear))
+            }
+        }
     }
     if (open) {
+        val maxMillis = maxDate?.let { it.toEpochDay() * MILLIS_PER_DAY }
+        val initial = value ?: listOfNotNull(LocalDate.now(), maxDate).min()
         val state = rememberDatePickerState(
-            initialSelectedDateMillis = (value ?: LocalDate.now()).toEpochDay() * MILLIS_PER_DAY,
+            initialSelectedDateMillis = initial.toEpochDay() * MILLIS_PER_DAY,
+            yearRange = DatePickerDefaults.YearRange.first..(maxDate?.year ?: DatePickerDefaults.YearRange.last),
+            selectableDates = object : SelectableDates {
+                override fun isSelectableDate(utcTimeMillis: Long) = maxMillis == null || utcTimeMillis <= maxMillis
+                override fun isSelectableYear(year: Int) = maxDate == null || year <= maxDate.year
+            },
         )
         DatePickerDialog(
             onDismissRequest = { open = false },

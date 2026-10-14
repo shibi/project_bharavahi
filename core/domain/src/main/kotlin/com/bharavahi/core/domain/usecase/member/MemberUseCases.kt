@@ -13,6 +13,7 @@ import com.bharavahi.core.domain.validation.Validators
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
+import java.time.LocalDate
 import javax.inject.Inject
 
 /** ORG-6: all members of the signed-in admin's community. */
@@ -52,8 +53,8 @@ class AddMemberUseCase @Inject constructor(
     private val org: OrgContext,
     private val members: MemberRepository,
 ) {
-    suspend operator fun invoke(details: MemberDetails): Result<String> = domainResult {
-        validate(details)
+    suspend operator fun invoke(details: MemberDetails, today: LocalDate = LocalDate.now()): Result<String> = domainResult {
+        validate(details, today)
         members.add(org.orgId(), details.trimmed())
     }
 }
@@ -63,8 +64,12 @@ class UpdateMemberUseCase @Inject constructor(
     private val org: OrgContext,
     private val members: MemberRepository,
 ) {
-    suspend operator fun invoke(memberId: String, details: MemberDetails): Result<Unit> = domainResult {
-        validate(details)
+    suspend operator fun invoke(
+        memberId: String,
+        details: MemberDetails,
+        today: LocalDate = LocalDate.now(),
+    ): Result<Unit> = domainResult {
+        validate(details, today)
         members.update(org.orgId(), memberId, details.trimmed())
     }
 }
@@ -79,13 +84,20 @@ class SetMemberStatusUseCase @Inject constructor(
     }
 }
 
-private fun validate(details: MemberDetails) {
+private fun validate(details: MemberDetails, today: LocalDate) {
     val errors = buildMap<Field, ValidationError> {
         Validators.required(details.name)?.let { put(Field.NAME, it) }
         Validators.optionalPhone(details.phone)?.let { put(Field.PHONE, it) }
         if (details.email.isNotBlank()) Validators.email(details.email)?.let { put(Field.EMAIL, it) }
+        if (details.extras.dateOfBirth?.isAfter(today) == true) put(Field.DATE_OF_BIRTH, ValidationError.FUTURE_DATE)
     }
     if (errors.isNotEmpty()) throw DomainException.Validation(errors)
 }
 
-private fun MemberDetails.trimmed() = MemberDetails(name.trim(), nickname.trim(), phone.trim(), email.trim())
+private fun MemberDetails.trimmed() = copy(
+    name = name.trim(),
+    nickname = nickname.trim(),
+    phone = phone.trim(),
+    email = email.trim(),
+    extras = extras.copy(job = extras.job.trim(), houseName = extras.houseName.trim()),
+)

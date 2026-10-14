@@ -7,6 +7,7 @@ import com.bharavahi.core.domain.error.DomainException
 import com.bharavahi.core.domain.error.Field
 import com.bharavahi.core.domain.error.ValidationError
 import com.bharavahi.core.domain.model.MemberDetails
+import com.bharavahi.core.domain.model.MemberExtras
 import com.bharavahi.core.domain.model.MemberStatus
 import com.bharavahi.core.domain.usecase.member.AddMemberUseCase
 import com.bharavahi.core.domain.usecase.member.ObserveMemberUseCase
@@ -32,6 +33,8 @@ data class MemberFormUiState(
     val nickname: String = "",
     val phone: String = "",
     val email: String = "",
+    val extras: MemberExtras = MemberExtras(),
+    val extrasExpanded: Boolean = false,
     val status: MemberStatus = MemberStatus.ACTIVE,
     val fieldErrors: Map<Field, ValidationError> = emptyMap(),
     val error: Throwable? = null,
@@ -75,6 +78,8 @@ class MemberFormViewModel @Inject constructor(
                             nickname = member.nickname,
                             phone = member.phone,
                             email = member.email,
+                            extras = member.extras,
+                            extrasExpanded = !member.extras.isEmpty,
                             status = member.status,
                         )
                     }
@@ -89,16 +94,25 @@ class MemberFormViewModel @Inject constructor(
             Field.NICKNAME -> it.copy(nickname = value)
             Field.PHONE -> it.copy(phone = value)
             Field.EMAIL -> it.copy(email = value)
+            Field.JOB -> it.copy(extras = it.extras.copy(job = value))
+            Field.HOUSE_NAME -> it.copy(extras = it.extras.copy(houseName = value))
             else -> it
         }
         updated.copy(fieldErrors = updated.fieldErrors - field)
     }
 
+    /** Dropdown and date fields of the Additional details section. */
+    fun onExtrasChange(extras: MemberExtras) = _state.update {
+        it.copy(extras = extras, fieldErrors = it.fieldErrors - Field.DATE_OF_BIRTH)
+    }
+
+    fun toggleExtras() = _state.update { it.copy(extrasExpanded = !it.extrasExpanded) }
+
     fun save() {
         val s = _state.value
         if (s.saving || s.loading) return
         _state.update { it.copy(saving = true, error = null) }
-        val details = MemberDetails(s.name, s.nickname, s.phone, s.email)
+        val details = MemberDetails(s.name, s.nickname, s.phone, s.email, s.extras)
         viewModelScope.launch {
             val result = if (memberId != null) updateMember(memberId, details) else addMember(details).map { }
             result
@@ -107,8 +121,15 @@ class MemberFormViewModel @Inject constructor(
                     _saved.send(Unit)
                 }
                 .onFailure { e ->
+                    val errors = (e as? DomainException.Validation)?.errors.orEmpty()
                     _state.update {
-                        it.copy(saving = false, fieldErrors = (e as? DomainException.Validation)?.errors.orEmpty(), error = e)
+                        it.copy(
+                            saving = false,
+                            fieldErrors = errors,
+                            error = e,
+                            // Keep a date-of-birth error visible even if the section was collapsed.
+                            extrasExpanded = it.extrasExpanded || Field.DATE_OF_BIRTH in errors,
+                        )
                     }
                 }
         }

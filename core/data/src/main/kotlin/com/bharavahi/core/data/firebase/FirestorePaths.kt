@@ -61,6 +61,12 @@ internal object FirestorePaths {
         const val EMAIL = "email"
         const val STATUS = "status"
         const val JOINED_AT = "joinedAt"
+        const val DATE_OF_BIRTH = "dateOfBirth"
+        const val GENDER = "gender"
+        const val BLOOD_GROUP = "bloodGroup"
+        const val JOB = "job"
+        const val HOUSE_NAME = "houseName"
+        const val SHIRT_SIZE = "shirtSize"
     }
 
     object Event {

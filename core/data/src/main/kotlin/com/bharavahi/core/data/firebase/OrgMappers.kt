@@ -9,8 +9,12 @@ import com.bharavahi.core.domain.model.Event
 import com.bharavahi.core.domain.model.EventMember
 import com.bharavahi.core.domain.model.EventRole
 import com.bharavahi.core.domain.model.EventStatus
+import com.bharavahi.core.domain.model.BloodGroup
+import com.bharavahi.core.domain.model.Gender
 import com.bharavahi.core.domain.model.Member
+import com.bharavahi.core.domain.model.MemberExtras
 import com.bharavahi.core.domain.model.MemberStatus
+import com.bharavahi.core.domain.model.ShirtSize
 import com.bharavahi.core.domain.model.Schedule
 import com.google.firebase.firestore.DocumentSnapshot
 import java.time.LocalDate
@@ -24,6 +28,12 @@ internal fun MemberStatus.toFirestore(): String = name.lowercase()
 
 internal fun String?.toMemberStatus(): MemberStatus =
     MemberStatus.entries.firstOrNull { it.name.equals(this, ignoreCase = true) } ?: MemberStatus.ACTIVE
+
+/** Optional enum fields are stored as their lowercase name; unknown or missing values read as null. */
+internal fun Enum<*>.toFirestoreName(): String = name.lowercase()
+
+internal inline fun <reified T : Enum<T>> String?.toEnumOrNull(): T? =
+    enumValues<T>().firstOrNull { it.name.equals(this, ignoreCase = true) }
 
 internal fun EventStatus.toFirestore(): String = name.lowercase()
 
@@ -43,6 +53,14 @@ internal fun DocumentSnapshot.toMember(): Member = Member(
     email = getString(FirestorePaths.Member.EMAIL).orEmpty(),
     status = getString(FirestorePaths.Member.STATUS).toMemberStatus(),
     joinedAtMillis = getTimestamp(FirestorePaths.Member.JOINED_AT)?.toDate()?.time,
+    extras = MemberExtras(
+        dateOfBirth = getString(FirestorePaths.Member.DATE_OF_BIRTH).toLocalDate(),
+        gender = getString(FirestorePaths.Member.GENDER).toEnumOrNull<Gender>(),
+        bloodGroup = getString(FirestorePaths.Member.BLOOD_GROUP).toEnumOrNull<BloodGroup>(),
+        job = getString(FirestorePaths.Member.JOB).orEmpty(),
+        houseName = getString(FirestorePaths.Member.HOUSE_NAME).orEmpty(),
+        shirtSize = getString(FirestorePaths.Member.SHIRT_SIZE).toEnumOrNull<ShirtSize>(),
+    ),
 )
 
 internal fun DocumentSnapshot.toEvent(): Event = Event(

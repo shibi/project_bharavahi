@@ -25,6 +25,7 @@
     <string name="core_validation_amount_too_large">More than is owed on this due</string>
     <string name="core_validation_due_already_paid">This due is already fully paid</string>
     <string name="core_validation_amount_too_small">Each due must be at least ₹1</string>
+    <string name="core_validation_future_date">Date can\'t be in the future</string>
 
     <string name="core_retry">Try again</string>
     <string name="core_cancel">Cancel</string>

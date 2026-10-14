@@ -16,14 +16,21 @@ import com.bharavahi.core.domain.model.AdminSessionState
 import com.bharavahi.core.domain.model.EventDetails
 import com.bharavahi.core.domain.model.EventMemberAssignment
 import com.bharavahi.core.domain.model.EventRole
+import com.bharavahi.core.domain.model.BloodGroup
+import com.bharavahi.core.domain.model.Gender
 import com.bharavahi.core.domain.model.Member
+import com.bharavahi.core.domain.model.MemberDetails
+import com.bharavahi.core.domain.model.MemberExtras
 import com.bharavahi.core.domain.model.MemberStatus
 import com.bharavahi.core.domain.model.NewEvent
 import com.bharavahi.core.domain.model.OrganizationStatus
 import com.bharavahi.core.domain.model.ScheduleDetails
+import com.bharavahi.core.domain.model.ShirtSize
+import com.bharavahi.core.domain.repository.MemberRepository
 import com.bharavahi.core.domain.usecase.event.CreateEventUseCase
 import com.bharavahi.core.domain.usecase.event.RemoveEventMemberUseCase
 import com.bharavahi.core.domain.usecase.event.UpdateEventRolesUseCase
+import com.bharavahi.core.domain.usecase.member.AddMemberUseCase
 import com.bharavahi.core.domain.usecase.member.ObserveMembersUseCase
 import com.bharavahi.core.domain.usecase.orgauth.ObserveAdminSessionUseCase
 import com.bharavahi.core.domain.usecase.orgauth.OrgSignInUseCase
@@ -31,6 +38,7 @@ import com.bharavahi.core.domain.usecase.schedule.CreateScheduleUseCase
 import com.bharavahi.core.domain.usecase.schedule.PreviewDuesUseCase
 import com.bharavahi.core.domain.usecase.schedule.UpdateScheduleUseCase
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
@@ -106,6 +114,50 @@ class MemberFilterTest {
     fun `status filter`() {
         assertThat(ObserveMembersUseCase.filter(members, "", MemberStatus.DISABLED).map { it.id }).containsExactly("2")
         assertThat(ObserveMembersUseCase.filter(members, "", null)).hasSize(3)
+    }
+}
+
+class MemberUseCasesTest {
+    private val repo = object : MemberRepository {
+        var added: MemberDetails? = null
+        override fun observeAll(orgId: String) = emptyFlow<List<Member>>()
+        override fun observe(orgId: String, memberId: String) = emptyFlow<Member?>()
+        override suspend fun add(orgId: String, details: MemberDetails): String {
+            added = details
+            return "m1"
+        }
+        override suspend fun update(orgId: String, memberId: String, details: MemberDetails) = Unit
+        override suspend fun setStatus(orgId: String, memberId: String, status: MemberStatus) = Unit
+    }
+    private val add = AddMemberUseCase(FakeOrgContext(), repo)
+    private val today = LocalDate.parse("2026-10-14")
+
+    @Test
+    fun `additional details are optional`() = runTest {
+        assertThat(add(MemberDetails("Anil", "", "", ""), today).isSuccess).isTrue()
+        assertThat(repo.added!!.extras).isEqualTo(MemberExtras())
+    }
+
+    @Test
+    fun `additional details are kept and trimmed`() = runTest {
+        val extras = MemberExtras(
+            dateOfBirth = LocalDate.parse("1990-05-01"),
+            gender = Gender.FEMALE,
+            bloodGroup = BloodGroup.O_NEG,
+            job = " Teacher ",
+            houseName = " Rose Villa ",
+            shirtSize = ShirtSize.M,
+        )
+        add(MemberDetails("Beena", "", "", "", extras), today).getOrThrow()
+        assertThat(repo.added!!.extras).isEqualTo(extras.copy(job = "Teacher", houseName = "Rose Villa"))
+    }
+
+    @Test
+    fun `date of birth in the future is rejected`() = runTest {
+        val details = MemberDetails("Anil", "", "", "", MemberExtras(dateOfBirth = today.plusDays(1)))
+        val error = add(details, today).exceptionOrNull() as DomainException.Validation
+        assertThat(error.errors).containsEntry(Field.DATE_OF_BIRTH, ValidationError.FUTURE_DATE)
+        assertThat(add(details.copy(extras = MemberExtras(dateOfBirth = today)), today).isSuccess).isTrue()
     }
 }
 

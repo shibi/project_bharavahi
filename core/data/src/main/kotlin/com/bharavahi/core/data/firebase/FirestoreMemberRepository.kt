@@ -48,7 +48,7 @@ internal class FirestoreMemberRepository @Inject constructor(
 
     override suspend fun update(orgId: String, memberId: String, details: MemberDetails) = firebaseCall {
         val batch = db.batch()
-        batch.update(members(orgId).document(memberId), details.toMap())
+        batch.update(members(orgId).document(memberId), details.toMap(forUpdate = true))
         forEachEventMembership(orgId, memberId) { batch.update(it, FirestorePaths.EventMember.NAME, details.name) }
         batch.commit().awaitWrite()
         Unit
@@ -77,10 +77,29 @@ internal class FirestoreMemberRepository @Inject constructor(
         }
     }
 
-    private fun MemberDetails.toMap(): Map<String, Any> = mapOf(
-        FirestorePaths.Member.NAME to name,
-        FirestorePaths.Member.NICKNAME to nickname,
-        FirestorePaths.Member.PHONE to phone,
-        FirestorePaths.Member.EMAIL to email,
-    )
+    /**
+     * Empty optional extras are left out on add. On update ([forUpdate]) they are deleted instead,
+     * so clearing a field in the form removes it from the document.
+     */
+    private fun MemberDetails.toMap(forUpdate: Boolean = false): Map<String, Any> {
+        val extrasMap = mapOf(
+            FirestorePaths.Member.DATE_OF_BIRTH to extras.dateOfBirth.toFirestore(),
+            FirestorePaths.Member.GENDER to extras.gender?.toFirestoreName(),
+            FirestorePaths.Member.BLOOD_GROUP to extras.bloodGroup?.toFirestoreName(),
+            FirestorePaths.Member.JOB to extras.job.ifEmpty { null },
+            FirestorePaths.Member.HOUSE_NAME to extras.houseName.ifEmpty { null },
+            FirestorePaths.Member.SHIRT_SIZE to extras.shirtSize?.toFirestoreName(),
+        )
+        val extrasFields: Map<String, Any> = if (forUpdate) {
+            extrasMap.mapValues { (_, value) -> value ?: FieldValue.delete() }
+        } else {
+            extrasMap.mapNotNull { (key, value) -> value?.let { key to it } }.toMap()
+        }
+        return mapOf(
+            FirestorePaths.Member.NAME to name,
+            FirestorePaths.Member.NICKNAME to nickname,
+            FirestorePaths.Member.PHONE to phone,
+            FirestorePaths.Member.EMAIL to email,
+        ) + extrasFields
+    }
 }

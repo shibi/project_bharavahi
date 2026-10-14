@@ -134,6 +134,12 @@ Dates without time (due dates, expense dates, event dates) are stored as `"YYYY-
 | email | String | optional |
 | status | String | `active` \| `disabled` \| `archived` |
 | joinedAt | Timestamp | |
+| dateOfBirth | String | optional, `YYYY-MM-DD` |
+| gender | String | optional, `male` \| `female` \| `other` |
+| bloodGroup | String | optional, `a_pos` \| `a_neg` \| `b_pos` \| `b_neg` \| `ab_pos` \| `ab_neg` \| `o_pos` \| `o_neg` |
+| job | String | optional |
+| houseName | String | optional |
+| shirtSize | String | optional, `xs` \| `s` \| `m` \| `l` \| `xl` \| `xxl` \| `xxxl` |
 
 **`…/activity/{logId}`**: `action: String`, `actorUid`, `target: String`, `at: Timestamp` (audit trail)
 
@@ -234,7 +240,7 @@ Dates without time (due dates, expense dates, event dates) are stored as `"YYYY-
 | ID | Requirement |
 | --- | --- |
 | ORG-6 | Member list with search (name, nickname, phone) and status filter (active / disabled / archived). |
-| ORG-7 | Add member: name (required), nickname, phone, email. |
+| ORG-7 | Add member: name (required), nickname, phone, email. A collapsible **Additional details** section holds optional fields: date of birth (not in the future), gender, blood group, job, house name, shirt size. |
 | ORG-8 | Edit member details. |
 | ORG-9 | Enable / disable a member at any time. Archive a member. Members are **never hard-deleted**. |
 
