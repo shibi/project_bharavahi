@@ -32,11 +32,14 @@ data class EventDuesUiState(
     val roleFilter: String? = null,
     val sort: MemberSort = MemberSort.MOST_BEHIND,
     val totalCount: Int = 0,
+    val query: String = "",
+    /** Active members per current status, for the filter chip counts. */
+    val statusCounts: Map<DueStatus, Int> = emptyMap(),
     val visible: List<MemberDues> = emptyList(),
     val error: Throwable? = null,
 )
 
-private data class Filters(val status: DueStatus?, val roleId: String?, val sort: MemberSort)
+private data class Filters(val status: DueStatus?, val roleId: String?, val sort: MemberSort, val query: String = "")
 
 /** ORG-17 to ORG-19 and ORG-31: who has paid what, filtered and sorted, and the WhatsApp list. */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -68,7 +71,10 @@ class EventDuesViewModel @Inject constructor(
             roleFilter = f.roleId,
             sort = f.sort,
             totalCount = d?.members?.size ?: 0,
-            visible = d?.let { MemberDuesRules.filterAndSort(it.members, f.status, f.roleId, f.sort) }.orEmpty(),
+            query = f.query,
+            statusCounts = d?.members.orEmpty().filter { it.member.active }.groupingBy { it.currentStatus }.eachCount(),
+            visible = d?.let { MemberDuesRules.filterAndSort(it.members, f.status, f.roleId, f.sort) }.orEmpty()
+                .filter { f.query.isBlank() || it.member.name.contains(f.query.trim(), ignoreCase = true) },
             error = result.exceptionOrNull() ?: if (d == null) DomainException.NotFound() else null,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), EventDuesUiState())
@@ -76,6 +82,7 @@ class EventDuesViewModel @Inject constructor(
     fun onStatusFilter(status: DueStatus?) = filters.value.let { filters.value = it.copy(status = status) }
     fun onRoleFilter(roleId: String?) = filters.value.let { filters.value = it.copy(roleId = roleId) }
     fun onSort(sort: MemberSort) = filters.value.let { filters.value = it.copy(sort = sort) }
+    fun onQuery(query: String) = filters.value.let { filters.value = it.copy(query = query) }
     fun retry() { retry.value++ }
 
     suspend fun whatsAppText(): Result<String> = buildWhatsApp(eventId, LocalDate.now())

@@ -1,6 +1,20 @@
 package com.bharavahi.org.ui.eventdetail
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import com.bharavahi.core.ui.theme.LocalStatusColors
+import kotlin.math.roundToInt
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -131,6 +145,7 @@ fun EventDetailScreen(
                 item { Overview(event) }
                 item {
                     EventActions(
+                        memberCount = state.members.size,
                         onMarkPayment = { onMarkPayment(event.id) },
                         onOpenDues = { onOpenDues(event.id) },
                         onOpenPayments = { onOpenPayments(event.id) },
@@ -159,7 +174,7 @@ fun EventDetailScreen(
 
                 item {
                     SectionHeader(stringResource(R.string.event_roles), stringResource(R.string.roles_edit), viewModel::openRolesDialog)
-                    RoleChips(event)
+                    RoleChips(event, state.members)
                 }
 
                 item {
@@ -233,54 +248,95 @@ fun EventDetailScreen(
     }
 }
 
-/** ORG-13: opening balance, collected, expenses and balance (BR-9). The chart arrives with payments. */
+/** ORG-13: current balance with the opening/collected/expenses breakdown and an income-vs-outflow bar (BR-9). */
 @Composable
 private fun Overview(event: Event) {
+    val onPrimary = MaterialTheme.colorScheme.onPrimary
+    val inflow = Color(0xFFBCE9FD)
+    val outflow = MaterialTheme.colorScheme.secondary
+    val total = (event.totalCollected + event.totalExpenses).coerceAtLeast(0L)
+    val inShare = if (total > 0) event.totalCollected.toFloat() / total else 0f
     Card(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.primary,
-            contentColor = MaterialTheme.colorScheme.onPrimary,
+            contentColor = onPrimary,
         ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    stringResource(R.string.event_dates, formatDate(event.startDate), formatDate(event.endDate)),
-                    style = MaterialTheme.typography.bodyMedium,
+                    stringResource(R.string.event_current_balance).uppercase(),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = onPrimary.copy(alpha = 0.8f),
                     modifier = Modifier.weight(1f),
                 )
-                StatusBadge(stringResource(event.status.labelRes()), MaterialTheme.colorScheme.onPrimary)
-            }
-            if (event.description.isNotBlank()) {
-                Text(event.description, style = MaterialTheme.typography.bodyMedium)
+                StatusBadge(stringResource(event.status.labelRes()), onPrimary)
             }
             Text(
-                stringResource(R.string.event_balance, formatRupees(event.balance)),
-                style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier.padding(top = 4.dp, bottom = 8.dp),
+                formatRupees(event.balance),
+                style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.Bold,
             )
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                StatTile(R.string.event_opening_balance_short, event.openingBalance, Modifier.weight(1f))
-                StatTile(R.string.event_total_collected, event.totalCollected, Modifier.weight(1f))
+            Text(
+                stringResource(R.string.event_dates, formatDate(event.startDate), formatDate(event.endDate)),
+                style = MaterialTheme.typography.bodySmall,
+                color = onPrimary.copy(alpha = 0.7f),
+            )
+            if (event.description.isNotBlank()) {
+                Text(event.description, style = MaterialTheme.typography.bodySmall)
             }
-            StatTile(R.string.event_total_expenses, event.totalExpenses, Modifier.fillMaxWidth())
+            Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                StatTile(R.string.event_opening_balance_short, event.openingBalance, null, Modifier.weight(1f))
+                StatTile(R.string.event_total_collected, event.totalCollected, inflow, Modifier.weight(1f))
+            }
+            StatTile(R.string.event_total_expenses, event.totalExpenses, outflow, Modifier.fillMaxWidth())
+            if (total > 0) {
+                Row(
+                    Modifier.fillMaxWidth().padding(top = 8.dp).height(10.dp).clip(CircleShape).background(Color.Black.copy(alpha = 0.2f)),
+                ) {
+                    if (inShare > 0f) Box(Modifier.weight(inShare).fillMaxHeight().background(inflow))
+                    if (inShare < 1f) Box(Modifier.weight(1f - inShare).fillMaxHeight().background(outflow))
+                }
+                Row(Modifier.fillMaxWidth()) {
+                    Text(
+                        stringResource(R.string.event_share_collections, (inShare * 100).roundToInt()),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = onPrimary.copy(alpha = 0.8f),
+                        modifier = Modifier.weight(1f),
+                    )
+                    Text(
+                        stringResource(R.string.event_share_outflow, ((1f - inShare) * 100).roundToInt()),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = onPrimary.copy(alpha = 0.8f),
+                    )
+                }
+            }
         }
     }
 }
 
-/** Translucent tile on the teal overview card (design: Event Detail stat grid). */
+/** Translucent tile on the teal overview card, with an accent dot for the coloured figures. */
 @Composable
-private fun StatTile(labelRes: Int, paise: Long, modifier: Modifier = Modifier) {
+private fun StatTile(labelRes: Int, paise: Long, accent: Color?, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
-            .background(MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.12f), RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
             .padding(12.dp),
     ) {
-        Text(stringResource(labelRes), style = MaterialTheme.typography.labelMedium)
-        Text(formatRupees(paise), style = MaterialTheme.typography.titleMedium)
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            if (accent != null) Box(Modifier.size(6.dp).clip(CircleShape).background(accent))
+            Text(stringResource(labelRes), style = MaterialTheme.typography.labelMedium)
+        }
+        Text(
+            formatRupees(paise),
+            style = MaterialTheme.typography.titleMedium,
+            color = accent ?: MaterialTheme.colorScheme.onPrimary,
+        )
     }
 }
+
 
 @Composable
 private fun SectionHeader(title: String, actionLabel: String, onAction: () -> Unit) {
@@ -297,33 +353,97 @@ private fun HelpText(text: String) {
 
 @Composable
 private fun ScheduleCard(schedule: Schedule, onClick: () -> Unit) {
-    Card(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(schedule.name, style = MaterialTheme.typography.titleMedium)
+    Card(
+        onClick = onClick,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        shape = RoundedCornerShape(20.dp),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.Top) {
+                Column(Modifier.weight(1f)) {
+                    Text(schedule.name, style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        stringResource(
+                            R.string.schedule_per_member_dues,
+                            formatRupees(schedule.amountPerMember),
+                            schedule.numberOfDues,
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                if (schedule.locked) {
+                    Text(
+                        stringResource(R.string.schedule_locked_short),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.tertiary,
+                        modifier = Modifier
+                            .background(MaterialTheme.colorScheme.tertiaryContainer, CircleShape)
+                            .padding(horizontal = 10.dp, vertical = 4.dp),
+                    )
+                }
+            }
             Text(
-                stringResource(
-                    R.string.schedule_summary,
-                    formatRupees(schedule.amountPerMember),
-                    schedule.numberOfDues,
-                    formatDate(schedule.startDate),
-                    formatDate(schedule.endDate),
-                ),
+                formatDate(schedule.startDate) + " – " + formatDate(schedule.endDate),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = MaterialTheme.colorScheme.outline,
             )
         }
     }
 }
 
+/** Design: committee roles as chips pairing the role with the member who holds it. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun RoleChips(event: Event) {
+private fun RoleChips(event: Event, members: List<EventMember>) {
     if (event.roles.isEmpty()) {
         HelpText(stringResource(R.string.event_no_roles))
         return
     }
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        event.roles.forEach { role -> AssistChip(onClick = {}, label = { Text(role.name) }) }
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        event.roles.forEach { role ->
+            val holders = members.filter { it.roleId == role.id }
+            if (holders.isEmpty()) {
+                RoleChip(role.name, null)
+            } else {
+                holders.forEach { RoleChip(role.name, it.name) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RoleChip(role: String, holder: String?) {
+    Row(
+        Modifier
+            .background(MaterialTheme.colorScheme.surface, CircleShape)
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
+            .padding(start = 8.dp, end = 14.dp, top = 6.dp, bottom = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        if (holder != null) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.size(24.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary),
+            ) {
+                Text(
+                    holder.trim().split(Regex("\\s+")).take(2).joinToString("") { it.first().uppercase() },
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onPrimary,
+                )
+            }
+        }
+        Column {
+            Text(
+                role.uppercase(),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.outline,
+            )
+            if (holder != null) Text(holder, style = MaterialTheme.typography.labelMedium)
+        }
     }
 }
 
@@ -388,47 +508,36 @@ private fun EventStatus.confirmRes(): Int = when (this) {
     EventStatus.CLOSED -> R.string.event_confirm_close
 }
 
-/** Stage 2 entry points: payments, member dues, expenses and the WhatsApp list. */
-@OptIn(ExperimentalLayoutApi::class)
+/** Entry points: payments, member dues, expenses and the WhatsApp list, as one scrollable chip row. */
 @Composable
 private fun EventActions(
+    memberCount: Int,
     onMarkPayment: () -> Unit,
     onOpenDues: () -> Unit,
     onOpenPayments: () -> Unit,
     onOpenExpenses: () -> Unit,
     onShare: () -> Unit,
 ) {
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    val outline = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.horizontalScroll(rememberScrollState()),
+    ) {
         Button(
             onClick = onMarkPayment,
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.secondary,
                 contentColor = MaterialTheme.colorScheme.onSecondary,
             ),
-            modifier = Modifier.padding(end = 8.dp),
-        ) {
-            Icon(Icons.Default.Add, contentDescription = null)
-            Text(stringResource(R.string.mark_payment), modifier = Modifier.padding(start = 6.dp))
-        }
-        AssistChip(
+        ) { Text(stringResource(R.string.mark_payment)) }
+        OutlinedButton(
             onClick = onOpenDues,
-            label = { Text(stringResource(R.string.event_members_dues)) },
-            leadingIcon = { Icon(Icons.Default.Groups, contentDescription = null) },
-        )
-        AssistChip(
-            onClick = onOpenPayments,
-            label = { Text(stringResource(R.string.payments_title)) },
-            leadingIcon = { Icon(Icons.Default.Payments, contentDescription = null) },
-        )
-        AssistChip(
-            onClick = onOpenExpenses,
-            label = { Text(stringResource(R.string.expenses_title)) },
-            leadingIcon = { Icon(Icons.AutoMirrored.Filled.ReceiptLong, contentDescription = null) },
-        )
-        AssistChip(
-            onClick = onShare,
-            label = { Text(stringResource(R.string.share_whatsapp)) },
-            leadingIcon = { Icon(Icons.Default.Share, contentDescription = null) },
-        )
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
+        ) { Text(stringResource(R.string.event_members_dues) + " ($memberCount)", color = MaterialTheme.colorScheme.primary) }
+        OutlinedButton(onClick = onOpenPayments, border = outline) { Text(stringResource(R.string.payments_title)) }
+        OutlinedButton(onClick = onOpenExpenses, border = outline) { Text(stringResource(R.string.expenses_title)) }
+        OutlinedButton(onClick = onShare, border = outline) {
+            Text(stringResource(R.string.share_whatsapp), color = LocalStatusColors.current.paid)
+        }
     }
 }
