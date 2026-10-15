@@ -23,5 +23,5 @@ class AppViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.Eagerly, SessionState.Loading)
 
     val themeMode: StateFlow<ThemeMode> = observeThemeMode()
-        .stateIn(viewModelScope, SharingStarted.Eagerly, ThemeMode.SYSTEM)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, ThemeMode.DEFAULT)
 }

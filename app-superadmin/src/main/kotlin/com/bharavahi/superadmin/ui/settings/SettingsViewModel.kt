@@ -45,7 +45,7 @@ class SettingsViewModel @Inject constructor(
     val mail: StateFlow<MailFormState> = _mail.asStateFlow()
 
     val themeMode: StateFlow<ThemeMode> = observeThemeMode()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ThemeMode.SYSTEM)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ThemeMode.DEFAULT)
 
     init {
         viewModelScope.launch {

@@ -14,7 +14,7 @@ import com.bharavahi.core.domain.model.ThemeMode
 @Composable
 fun BharavahiTheme(
     palette: BrandPalette,
-    mode: ThemeMode = ThemeMode.SYSTEM,
+    mode: ThemeMode = ThemeMode.DEFAULT,
     typography: Typography = DefaultTypography,
     content: @Composable () -> Unit,
 ) {

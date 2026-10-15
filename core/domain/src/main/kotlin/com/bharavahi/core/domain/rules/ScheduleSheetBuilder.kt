@@ -1,5 +1,6 @@
 package com.bharavahi.core.domain.rules
 
+import com.bharavahi.core.domain.model.Due
 import com.bharavahi.core.domain.model.EventMember
 import com.bharavahi.core.domain.model.Schedule
 import com.bharavahi.core.domain.model.SheetCell
@@ -33,20 +34,14 @@ object ScheduleSheetBuilder {
 
     fun build(eventName: String, schedule: Schedule, members: List<EventMember>): SheetTab {
         val dues = schedule.dues.sortedBy { it.index }
-        val spansYears = dues.map { it.dueDate.year }.distinct().size > 1
         val firstDueCol = column(2)
         val lastDueCol = column(1 + dues.size)
         val totalCol = column(2 + dues.size)
         val sorted = members.sortedBy { it.name.lowercase() }
         val lastMemberRow = FIRST_MEMBER_ROW + sorted.size - 1
 
-        val title = listOf(SheetCell.Text("${eventName.trim()} · ${schedule.name.trim()}".uppercase()))
-        val header = listOf(SheetCell.Text("NO"), SheetCell.Text("NAME")) +
-            dues.map { due ->
-                val month = due.dueDate.month.getDisplayName(TextStyle.FULL, Locale.ENGLISH).uppercase()
-                SheetCell.Text("DUE${due.index + 1} - $month" + if (spansYears) " ${due.dueDate.year}" else "")
-            } +
-            SheetCell.Text("TOTAL")
+        val title = listOf(SheetCell.Text(tableTitle(eventName, schedule)))
+        val header = (listOf("NO", "NAME") + dueHeaders(dues) + "TOTAL").map { SheetCell.Text(it) }
         val memberRows = sorted.mapIndexed { i, member ->
             val row = FIRST_MEMBER_ROW + i
             listOf(SheetCell.Number(i + 1), SheetCell.Text(member.name.trim().uppercase())) +
@@ -60,6 +55,19 @@ object ScheduleSheetBuilder {
             }
         return SheetTab(schedule.id, schedule.name.trim().ifEmpty { "Schedule" }.take(MAX_TITLE), listOf(title, header) + memberRows + listOf(totals))
     }
+
+    /** "DUE1 - JUNE" per due, sorted by index; the year is added when the dues span more than one. Also used by the PDF (ORG-34). */
+    fun dueHeaders(dues: List<Due>): List<String> {
+        val sorted = dues.sortedBy { it.index }
+        val spansYears = sorted.map { it.dueDate.year }.distinct().size > 1
+        return sorted.map { due ->
+            val month = due.dueDate.month.getDisplayName(TextStyle.FULL, Locale.ENGLISH).uppercase()
+            "DUE${due.index + 1} - $month" + if (spansYears) " ${due.dueDate.year}" else ""
+        }
+    }
+
+    /** "EVENT · SCHEDULE", the tab's title row. */
+    fun tableTitle(eventName: String, schedule: Schedule): String = "${eventName.trim()} · ${schedule.name.trim()}".uppercase()
 
     private fun sumOrZero(empty: Boolean, range: String): SheetCell =
         if (empty) SheetCell.Number(0) else SheetCell.Formula("=SUM($range)")

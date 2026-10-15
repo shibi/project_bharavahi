@@ -337,7 +337,7 @@ Joseph - 1250
 
 | ID | Requirement |
 | --- | --- |
-| ORG-34 | Export per event: payment history and member status, as PDF or CSV, shared through the Android share sheet. |
+| ORG-34 | Export per event, shared through the Android share sheet. **Done:** the **Google Sheet backup** card on the event screen has **Share PDF** (works without a Google account): event summary (opening balance, collected, expenses, balance), then one table per schedule laid out like its sheet tab (ORG-37), A4 landscape. **To do:** payment history and member status as CSV. |
 
 ---
 
@@ -467,7 +467,7 @@ Both files are next to this one.
 | UI-2 | `BharavahiTheme(palette, mode)` wraps `MaterialTheme` and provides `LocalStatusColors`. Each app calls it once in `MainActivity`: `app-org` with `TealOrangePalette`, `app-superadmin` with `SlatePalette`. |
 | UI-3 | Screens use only `MaterialTheme.colorScheme.*`, `MaterialTheme.typography.*`, `MaterialTheme.shapes.*` and `LocalStatusColors.current.*`. No `Color(0x…)` outside `core/ui/theme` (enforced by a custom lint rule or detekt check). |
 | UI-4 | Dynamic color (Android 12+ wallpaper colours) is disabled. |
-| UI-5 | Theme mode: System (default), Light or Dark, chosen in Profile and stored with DataStore. |
+| UI-5 | Theme mode: System, Light (default) or Dark, chosen in Profile and stored with DataStore. |
 | UI-6 | Status (Paid, Partly paid, Pending) is always shown with a text label or icon as well as colour. |
 | UI-7 | Every text/background pair meets WCAG AA contrast (4.5:1 for body text). |
 

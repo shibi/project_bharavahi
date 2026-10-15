@@ -20,6 +20,8 @@ import com.bharavahi.core.domain.usecase.event.SetEventMemberRoleUseCase
 import com.bharavahi.core.domain.usecase.event.SetEventStatusUseCase
 import com.bharavahi.core.domain.usecase.event.UpdateEventRolesUseCase
 import com.bharavahi.core.domain.usecase.expense.ObserveExpensesUseCase
+import com.bharavahi.core.domain.rules.EventPdfReport
+import com.bharavahi.core.domain.usecase.payment.BuildEventPdfReportUseCase
 import com.bharavahi.core.domain.usecase.payment.BuildWhatsAppMessageUseCase
 import com.bharavahi.core.domain.usecase.schedule.ObserveSchedulesUseCase
 import com.bharavahi.core.domain.usecase.sheets.ObserveSheetsStateUseCase
@@ -73,6 +75,7 @@ class EventDetailViewModel @Inject constructor(
     private val setEventMemberRole: SetEventMemberRoleUseCase,
     private val removeEventMember: RemoveEventMemberUseCase,
     private val buildWhatsApp: BuildWhatsAppMessageUseCase,
+    private val buildPdfReport: BuildEventPdfReportUseCase,
     observeSheets: ObserveSheetsStateUseCase,
 ) : ViewModel() {
 
@@ -118,6 +121,9 @@ class EventDetailViewModel @Inject constructor(
 
     /** ORG-31. */
     suspend fun whatsAppText(): Result<String> = buildWhatsApp(eventId, LocalDate.now())
+
+    /** ORG-34. */
+    suspend fun pdfReport(): Result<EventPdfReport> = buildPdfReport(eventId, LocalDate.now())
 
     fun setStatus(status: EventStatus) = launchAction { setEventStatus(eventId, status) }
 

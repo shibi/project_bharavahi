@@ -83,6 +83,9 @@
     <string name="sheets_event_pending">Google Sheet: waiting for the first sync</string>
     <string name="sheets_event_synced">Google Sheet: updated %1$s</string>
     <string name="sheets_open">Open sheet</string>
+    <string name="sheets_card_title">Google Sheet backup</string>
+    <string name="pdf_share">Share PDF</string>
+    <string name="pdf_share_title">Share event PDF</string>
     <string name="member_extras_title">Additional details</string>
     <string name="member_extras_optional">Optional</string>
     <string name="member_extras_expand">Show additional details</string>

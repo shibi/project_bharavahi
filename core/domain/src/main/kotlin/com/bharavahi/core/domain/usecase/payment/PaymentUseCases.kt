@@ -13,10 +13,13 @@ import com.bharavahi.core.domain.model.PaymentMethod
 import com.bharavahi.core.domain.model.Schedule
 import com.bharavahi.core.domain.repository.EventRepository
 import com.bharavahi.core.domain.repository.OrgContext
+import com.bharavahi.core.domain.repository.OrganizationRepository
 import com.bharavahi.core.domain.repository.PaymentBackupScheduler
 import com.bharavahi.core.domain.repository.PaymentRepository
 import com.bharavahi.core.domain.repository.ScheduleRepository
 import com.bharavahi.core.domain.repository.SheetSyncScheduler
+import com.bharavahi.core.domain.rules.EventPdfReport
+import com.bharavahi.core.domain.rules.EventPdfReportBuilder
 import com.bharavahi.core.domain.rules.MemberDuesRules
 import com.bharavahi.core.domain.rules.WhatsAppMessage
 import com.bharavahi.core.domain.usecase.domainResult
@@ -186,6 +189,26 @@ class ResendPaymentEmailUseCase @Inject constructor(
         val orgId = org.orgId()
         payments.setEmailStatus(orgId, eventId, paymentId, EmailStatus.PENDING)
         backup.enqueue(orgId, eventId, paymentId)
+    }
+}
+
+/** ORG-34: the event PDF's content as it stands now: summary and one table per schedule, like the sheet. */
+class BuildEventPdfReportUseCase @Inject constructor(
+    private val org: OrgContext,
+    private val organizations: OrganizationRepository,
+    private val events: EventRepository,
+    private val schedules: ScheduleRepository,
+) {
+    suspend operator fun invoke(eventId: String, today: LocalDate): Result<EventPdfReport> = domainResult {
+        val orgId = org.orgId()
+        val event = events.observe(orgId, eventId).first() ?: throw DomainException.NotFound()
+        EventPdfReportBuilder.build(
+            communityName = organizations.observe(orgId).first()?.name.orEmpty(),
+            event = event,
+            schedules = schedules.observeAll(orgId, eventId).first(),
+            members = events.observeMembers(orgId, eventId).first(),
+            today = today,
+        )
     }
 }
 

@@ -120,7 +120,7 @@ class ProfileViewModel @Inject constructor(
     }
 
     val themeMode: StateFlow<ThemeMode> = observeThemeMode()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ThemeMode.SYSTEM)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ThemeMode.DEFAULT)
 
     private val _addForm = MutableStateFlow<AddCoAdminForm?>(null)
     val addForm: StateFlow<AddCoAdminForm?> = _addForm.asStateFlow()

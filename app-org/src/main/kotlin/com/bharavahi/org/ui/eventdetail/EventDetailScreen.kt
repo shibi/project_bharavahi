@@ -44,7 +44,11 @@ import androidx.compose.material.icons.filled.PersonRemove
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.TableChart
+import androidx.compose.material.icons.filled.PictureAsPdf
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
@@ -99,6 +103,7 @@ import com.bharavahi.org.ui.common.SectionTitle
 import com.bharavahi.org.ui.common.labelRes
 import com.bharavahi.org.ui.eventform.RolesEditor
 import com.bharavahi.org.ui.eventmembers.RolePicker
+import com.bharavahi.org.ui.common.sharePdf
 import com.bharavahi.org.ui.common.shareToWhatsApp
 import kotlinx.coroutines.launch
 
@@ -125,6 +130,8 @@ fun EventDetailScreen(
     var confirmRemove by remember { mutableStateOf<EventMember?>(null) }
     val scope = rememberCoroutineScope()
     val shareTitle = stringResource(R.string.share_whatsapp)
+    val pdfShareTitle = stringResource(R.string.pdf_share_title)
+    var sharingPdf by remember { mutableStateOf(false) }
 
     LaunchedEffect(state.actionError) {
         state.actionError?.let {
@@ -194,9 +201,23 @@ fun EventDetailScreen(
                         onClick = { onOpenSchedule(event.id, schedule.id) },
                     )
                 }
-                val sheetState = sheets
-                if (state.schedules.isNotEmpty() && sheetState != null) {
-                    item { SheetBackupRow(event, sheetState) }
+                if (state.schedules.isNotEmpty()) {
+                    item {
+                        SheetBackupCard(
+                            event = event,
+                            sheets = sheets,
+                            sharingPdf = sharingPdf,
+                            onSharePdf = {
+                                scope.launch {
+                                    sharingPdf = true
+                                    viewModel.pdfReport()
+                                        .mapCatching { sharePdf(context, it, pdfShareTitle) }
+                                        .onFailure { snackbar.showSnackbar(context.getString(it.messageRes())) }
+                                    sharingPdf = false
+                                }
+                            },
+                        )
+                    }
                 }
 
                 item {
@@ -421,13 +442,17 @@ private fun HelpText(text: String) {
     Text(text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
 }
 
-/** ORG-36: where the event's Google Sheet backup stands, with a link to open it. */
+/**
+ * ORG-36 and ORG-34: the event's Google Sheet backup in its own card: where it stands, a link to open the
+ * sheet once it exists, and a PDF of the same tables that works without a Google account.
+ */
 @Composable
-private fun SheetBackupRow(event: Event, sheets: SheetsState) {
+private fun SheetBackupCard(event: Event, sheets: SheetsState?, sharingPdf: Boolean, onSharePdf: () -> Unit) {
     val context = LocalContext.current
-    val connection = sheets.connection
+    val connection = sheets?.connection
     val sheetId = event.sheetId
     val status = when {
+        sheets == null -> null
         connection == null -> stringResource(R.string.sheets_event_off)
         connection.status == SheetsStatus.NEEDS_RECONNECT -> stringResource(R.string.sheets_event_paused)
         sheetId == null -> stringResource(R.string.sheets_event_pending)
@@ -435,24 +460,45 @@ private fun SheetBackupRow(event: Event, sheets: SheetsState) {
             stringResource(R.string.sheets_event_synced, DateUtils.getRelativeTimeSpanString(it).toString())
         } ?: stringResource(R.string.sheets_event_pending)
     }
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(20.dp),
+        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
     ) {
-        Icon(Icons.Default.TableChart, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
-        Text(
-            status,
-            style = MaterialTheme.typography.bodySmall,
-            color = if (connection?.status == SheetsStatus.NEEDS_RECONNECT) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.weight(1f),
-        )
-        if (sheetId != null) {
-            TextButton(onClick = {
-                runCatching {
-                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://docs.google.com/spreadsheets/d/$sheetId")))
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(Icons.Default.TableChart, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                Text(stringResource(R.string.sheets_card_title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+            }
+            if (status != null) {
+                Text(
+                    status,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (connection?.status == SheetsStatus.NEEDS_RECONNECT) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 4.dp)) {
+                if (sheetId != null) {
+                    OutlinedButton(onClick = {
+                        runCatching {
+                            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://docs.google.com/spreadsheets/d/$sheetId")))
+                        }
+                    }) {
+                        Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Text(stringResource(R.string.sheets_open), modifier = Modifier.padding(start = 8.dp))
+                    }
                 }
-            }) { Text(stringResource(R.string.sheets_open)) }
+                FilledTonalButton(onClick = onSharePdf, enabled = !sharingPdf) {
+                    if (sharingPdf) {
+                        CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
+                    } else {
+                        Icon(Icons.Default.PictureAsPdf, contentDescription = null, modifier = Modifier.size(18.dp))
+                    }
+                    Text(stringResource(R.string.pdf_share), modifier = Modifier.padding(start = 8.dp))
+                }
+            }
         }
     }
 }
