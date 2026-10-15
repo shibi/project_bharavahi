@@ -38,6 +38,7 @@ import com.bharavahi.core.domain.error.DomainException
 import com.bharavahi.core.domain.error.Field
 import com.bharavahi.core.ui.components.FormTextField
 import com.bharavahi.core.ui.components.messageRes
+import com.bharavahi.org.BuildConfig
 import com.bharavahi.org.R
 import com.bharavahi.org.ui.common.AccentButton
 
@@ -142,6 +143,12 @@ fun LoginScreen(viewModel: LoginViewModel = hiltViewModel()) {
                     }
                 }
             }
+            Text(
+                stringResource(R.string.profile_version, stringResource(R.string.login_title), BuildConfig.VERSION_NAME),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.outline,
+                modifier = Modifier.padding(top = 16.dp),
+            )
         }
     }
 }

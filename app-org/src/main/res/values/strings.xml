@@ -22,7 +22,7 @@
 
     <!-- Login (ORG-1) -->
     <string name="login_title">Bharavahi</string>
-    <string name="login_subtitle">Sign in with the admin login your community was given.</string>
+    <string name="login_subtitle">Dues and Events for your community</string>
     <string name="login_email">Email</string>
     <string name="login_password">Password</string>
     <string name="login_button">Sign in</string>
