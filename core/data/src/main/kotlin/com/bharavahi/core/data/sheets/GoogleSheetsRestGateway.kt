@@ -180,15 +180,22 @@ internal class GoogleSheetsRestGateway @Inject constructor() : SpreadsheetGatewa
                 }
                 listOf("top", "bottom", "left", "right", "innerHorizontal", "innerVertical").forEach { put(it, line) }
             },
-            request("autoResizeDimensions") {
-                putJsonObject("dimensions") {
-                    put("sheetId", sheetId)
-                    put("dimension", "COLUMNS")
-                    put("startIndex", 0)
-                    put("endIndex", cols)
-                }
-            },
+            // Fixed widths: auto-resize would size NO to the merged title sitting in A1.
+            columnWidth(sheetId, 0, 1, NO_WIDTH),
+            columnWidth(sheetId, 1, 2, NAME_WIDTH),
+            columnWidth(sheetId, 2, cols, AMOUNT_WIDTH),
         )
+    }
+
+    private fun columnWidth(sheetId: Int, start: Int, end: Int, pixels: Int) = request("updateDimensionProperties") {
+        putJsonObject("range") {
+            put("sheetId", sheetId)
+            put("dimension", "COLUMNS")
+            put("startIndex", start)
+            put("endIndex", end)
+        }
+        putJsonObject("properties") { put("pixelSize", pixels) }
+        put("fields", "pixelSize")
     }
 
     private fun updateTitle(sheetId: Int, title: String) = request("updateSheetProperties") {
@@ -284,6 +291,9 @@ internal class GoogleSheetsRestGateway @Inject constructor() : SpreadsheetGatewa
         const val METADATA_KEY = "bharavahiScheduleId"
         const val PLACEHOLDER = "Bharavahi"
         const val TIMEOUT_MILLIS = 30_000
+        const val NO_WIDTH = 45 // fits a 3-digit number
+        const val NAME_WIDTH = 240
+        const val AMOUNT_WIDTH = 160 // fits "DUE12 - SEPTEMBER 2026" in bold
 
         fun rgb(r: Int, g: Int, b: Int) = buildJsonObject {
             put("red", r / 255.0)
