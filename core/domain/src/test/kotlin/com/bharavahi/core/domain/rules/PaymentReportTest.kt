@@ -43,7 +43,9 @@ class PaymentReportTest {
         val lines = report.csv.trim().lines()
         // "=" sorts before letters; the formula guard keeps it inert in spreadsheets.
         assertThat(lines[1]).startsWith("\"'=Zed\"")
-        assertThat(lines[2]).startsWith("\"Anil <b>\",\"President\"")
+        assertThat(lines[2]).startsWith("\"Anil <b>\",\"₹500\"")
+        assertThat(lines[0]).doesNotContain("Role")
+        assertThat(report.html).doesNotContain("President")
         assertThat(report.csvFileName).isEqualTo("Onam-2026-members.csv")
     }
 }

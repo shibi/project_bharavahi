@@ -33,7 +33,7 @@ object PaymentReportBuilder {
             subject = subject,
             html = html(input, rows),
             csvFileName = "${event.name.fileSafe()}-members.csv",
-            csv = csv(event, rows),
+            csv = csv(rows),
         )
     }
 
@@ -67,7 +67,7 @@ object PaymentReportBuilder {
             append("</tr>")
             rows.forEach { row ->
                 append("<tr>")
-                cells(event, row).forEach { append("<td>").append(esc(it)).append("</td>") }
+                cells(row).forEach { append("<td>").append(esc(it)).append("</td>") }
                 append("</tr>")
             }
             append("</table>")
@@ -76,14 +76,13 @@ object PaymentReportBuilder {
         }
     }
 
-    private fun csv(event: Event, rows: List<MemberDues>): String = buildString {
+    private fun csv(rows: List<MemberDues>): String = buildString {
         appendLine(HEADERS.joinToString(",") { csvCell(it) })
-        rows.forEach { row -> appendLine(cells(event, row).joinToString(",") { csvCell(it) }) }
+        rows.forEach { row -> appendLine(cells(row).joinToString(",") { csvCell(it) }) }
     }
 
-    private fun cells(event: Event, row: MemberDues): List<String> = listOf(
+    private fun cells(row: MemberDues): List<String> = listOf(
         row.member.name + if (row.member.active) "" else " (disabled)",
-        event.roleName(row.member.roleId).orEmpty(),
         Money.format(row.totalPaid),
         Money.format(row.dueSoFar),
         Money.format(row.pending),
@@ -111,5 +110,5 @@ object PaymentReportBuilder {
 
     private fun String.fileSafe(): String = replace(Regex("[^A-Za-z0-9]+"), "-").trim('-').ifEmpty { "event" }
 
-    private val HEADERS = listOf("Member", "Role", "Paid so far", "Due so far", "Pending", "Current due status")
+    private val HEADERS = listOf("Member", "Paid so far", "Due so far", "Pending", "Current due status")
 }
