@@ -29,6 +29,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bharavahi.core.domain.error.Field
 import com.bharavahi.core.ui.components.FormTextField
 import com.bharavahi.core.ui.components.messageRes
+import com.bharavahi.superadmin.BuildConfig
 import com.bharavahi.superadmin.R
 
 @Composable
@@ -84,6 +85,12 @@ fun LoginScreen(viewModel: LoginViewModel = hiltViewModel()) {
                     Text(stringResource(R.string.login_button))
                 }
             }
+            Text(
+                stringResource(R.string.login_version, stringResource(R.string.login_title), BuildConfig.VERSION_NAME),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.outline,
+                modifier = Modifier.padding(top = 4.dp),
+            )
         }
     }
 }

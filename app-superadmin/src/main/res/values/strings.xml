@@ -4,6 +4,7 @@
 
     <!-- Login -->
     <string name="login_title">Bharavahi Super Admin</string>
+    <string name="login_version">%1$s v%2$s</string>
     <string name="login_subtitle">Sign in with the platform owner account.</string>
     <string name="login_email">Email</string>
     <string name="login_password">Password</string>

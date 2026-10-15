@@ -31,7 +31,10 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    buildFeatures { compose = true }
+    buildFeatures {
+        compose = true
+        buildConfig = true
+    }
     // javax.mail (pulled in by core:data) ships duplicate licence files.
     packaging {
         resources.excludes += setOf("META-INF/NOTICE.md", "META-INF/LICENSE.md")
