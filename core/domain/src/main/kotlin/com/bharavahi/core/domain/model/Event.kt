@@ -15,6 +15,11 @@ data class Event(
     val totalCollected: Long,
     val totalExpenses: Long,
     val createdAtMillis: Long?,
+    /** Google spreadsheet backing up this event's dues (ORG-36), once one has been created. */
+    val sheetId: String? = null,
+    val sheetSyncedAtMillis: Long? = null,
+    /** Hash of the content last written, so an unchanged event is not rewritten. */
+    val sheetHash: Int? = null,
 ) {
     /** BR-9. */
     val balance: Long get() = openingBalance + totalCollected - totalExpenses

@@ -18,6 +18,7 @@ import com.google.firebase.firestore.snapshots
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 internal class FirestoreEventRepository @Inject constructor(
@@ -94,6 +95,30 @@ internal class FirestoreEventRepository @Inject constructor(
 
     override suspend fun removeMember(orgId: String, eventId: String, memberId: String) = firebaseCall {
         eventMembers(orgId, eventId).document(memberId).delete().awaitWrite()
+        Unit
+    }
+
+    /** Runs online only (it is called by the sheet sync job), so a transaction is fine here (NFR-4 is about offline edits). */
+    override suspend fun claimSheetId(orgId: String, eventId: String, expected: String?, sheetId: String): String = firebaseCall {
+        val ref = events(orgId).document(eventId)
+        db.runTransaction { tx ->
+            val current = tx.get(ref).getString(FirestorePaths.Event.SHEET_ID)
+            if (current != expected && current != null) {
+                current
+            } else {
+                tx.update(ref, FirestorePaths.Event.SHEET_ID, sheetId)
+                sheetId
+            }
+        }.await()
+    }
+
+    override suspend fun setSheetSynced(orgId: String, eventId: String, hash: Int) = firebaseCall {
+        events(orgId).document(eventId).update(
+            mapOf(
+                FirestorePaths.Event.SHEET_HASH to hash.toLong(),
+                FirestorePaths.Event.SHEET_SYNCED_AT to FieldValue.serverTimestamp(),
+            ),
+        ).awaitWrite()
         Unit
     }
 

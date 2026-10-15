@@ -27,4 +27,11 @@ interface EventRepository {
     suspend fun addMembers(orgId: String, eventId: String, members: List<EventMemberAssignment>)
     suspend fun setMemberRole(orgId: String, eventId: String, memberId: String, roleId: String?)
     suspend fun removeMember(orgId: String, eventId: String, memberId: String)
+
+    /**
+     * Stores [sheetId] if the event still points at [expected] (in a transaction, so two phones can't both
+     * create a spreadsheet). Returns the id stored afterwards, which is another phone's if it got there first.
+     */
+    suspend fun claimSheetId(orgId: String, eventId: String, expected: String?, sheetId: String): String
+    suspend fun setSheetSynced(orgId: String, eventId: String, hash: Int)
 }

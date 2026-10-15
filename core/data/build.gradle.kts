@@ -32,6 +32,7 @@ dependencies {
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.android.mail)
     implementation(libs.android.activation)
+    implementation(libs.kotlinx.serialization.json)
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)

@@ -77,6 +77,9 @@ internal fun DocumentSnapshot.toEvent(): Event = Event(
     totalCollected = getLong(FirestorePaths.Event.TOTAL_COLLECTED) ?: 0L,
     totalExpenses = getLong(FirestorePaths.Event.TOTAL_EXPENSES) ?: 0L,
     createdAtMillis = getTimestamp(FirestorePaths.Event.CREATED_AT)?.toDate()?.time,
+    sheetId = getString(FirestorePaths.Event.SHEET_ID),
+    sheetSyncedAtMillis = getTimestamp(FirestorePaths.Event.SHEET_SYNCED_AT)?.toDate()?.time,
+    sheetHash = getLong(FirestorePaths.Event.SHEET_HASH)?.toInt(),
 )
 
 internal fun EventRole.toMap(): Map<String, Any> = mapOf(FirestorePaths.Role.ID to id, FirestorePaths.Role.NAME to name)

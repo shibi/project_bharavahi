@@ -10,6 +10,7 @@ import com.bharavahi.core.domain.model.ScheduleDetails
 import com.bharavahi.core.domain.repository.EventRepository
 import com.bharavahi.core.domain.repository.OrgContext
 import com.bharavahi.core.domain.repository.ScheduleRepository
+import com.bharavahi.core.domain.repository.SheetSyncScheduler
 import com.bharavahi.core.domain.rules.DueGenerator
 import com.bharavahi.core.domain.rules.DueStatusRules
 import com.bharavahi.core.domain.usecase.domainResult
@@ -70,9 +71,11 @@ class PreviewDuesUseCase @Inject constructor() {
 class CreateScheduleUseCase @Inject constructor(
     private val org: OrgContext,
     private val schedules: ScheduleRepository,
+    private val sheets: SheetSyncScheduler,
 ) {
     suspend operator fun invoke(eventId: String, details: ScheduleDetails): Result<String> = domainResult {
-        schedules.create(org.orgId(), eventId, build(id = "", details))
+        val orgId = org.orgId()
+        schedules.create(orgId, eventId, build(id = "", details)).also { sheets.enqueue(orgId, eventId) }
     }
 }
 
@@ -80,12 +83,14 @@ class CreateScheduleUseCase @Inject constructor(
 class UpdateScheduleUseCase @Inject constructor(
     private val org: OrgContext,
     private val schedules: ScheduleRepository,
+    private val sheets: SheetSyncScheduler,
 ) {
     suspend operator fun invoke(eventId: String, scheduleId: String, details: ScheduleDetails): Result<Unit> =
         domainResult {
             val orgId = org.orgId()
             requireUnlocked(schedules, orgId, eventId, scheduleId)
             schedules.update(orgId, eventId, build(scheduleId, details))
+            sheets.enqueue(orgId, eventId)
         }
 }
 
@@ -93,11 +98,13 @@ class UpdateScheduleUseCase @Inject constructor(
 class DeleteScheduleUseCase @Inject constructor(
     private val org: OrgContext,
     private val schedules: ScheduleRepository,
+    private val sheets: SheetSyncScheduler,
 ) {
     suspend operator fun invoke(eventId: String, scheduleId: String): Result<Unit> = domainResult {
         val orgId = org.orgId()
         requireUnlocked(schedules, orgId, eventId, scheduleId)
         schedules.delete(orgId, eventId, scheduleId)
+        sheets.enqueue(orgId, eventId)
     }
 }
 

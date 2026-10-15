@@ -23,6 +23,7 @@ import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Mail
 import androidx.compose.material.icons.filled.PersonAdd
+import androidx.compose.material.icons.filled.TableChart
 import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -41,6 +42,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -60,14 +62,18 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bharavahi.core.domain.error.Field
 import com.bharavahi.core.domain.model.OrgAdmin
+import com.bharavahi.core.domain.model.SheetsStatus
 import com.bharavahi.core.domain.model.ThemeMode
+import com.bharavahi.core.domain.usecase.sheets.SheetsState
 import com.bharavahi.core.ui.components.ConfirmDialog
 import com.bharavahi.core.ui.components.FormTextField
 import com.bharavahi.core.ui.components.messageRes
 import com.bharavahi.org.BuildConfig
 import com.bharavahi.org.R
 import com.bharavahi.org.ui.common.InitialsAvatar
+import com.bharavahi.org.sheets.rememberGoogleSheetsConnect
 import com.bharavahi.org.ui.common.TabTopBar
+import kotlinx.coroutines.launch
 
 @Composable
 fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
@@ -76,7 +82,10 @@ fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
     val addForm by viewModel.addForm.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     var confirmDeactivate by remember { mutableStateOf<OrgAdmin?>(null) }
+    var confirmDisconnect by remember { mutableStateOf(false) }
+    val connectGoogle = rememberGoogleSheetsConnect(viewModel::onGoogleAuthorized, viewModel::onGoogleAuthFailed)
 
     LaunchedEffect(state.actionError) {
         state.actionError?.let {
@@ -104,6 +113,22 @@ fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
                 onDeactivate = { confirmDeactivate = it },
                 onAdd = viewModel::openAddForm,
             )
+            state.sheets?.let { sheets ->
+                val connectedBy = (listOfNotNull(state.me) + state.coAdmins)
+                    .firstOrNull { it.uid == sheets.connection?.connectedBy }
+                    ?.let { it.name.ifBlank { it.email } }
+                SheetsBackupCard(
+                    sheets = sheets,
+                    connectedBy = connectedBy,
+                    connecting = state.connectingSheets,
+                    onConnect = connectGoogle,
+                    onSyncNow = {
+                        viewModel.syncSheetsNow()
+                        scope.launch { snackbar.showSnackbar(context.getString(R.string.sheets_sync_started)) }
+                    },
+                    onDisconnect = { confirmDisconnect = true },
+                )
+            }
             PreferencesCard(themeMode, viewModel::onThemeModeChange)
             OutlinedButton(
                 onClick = viewModel::signOut,
@@ -141,6 +166,19 @@ fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
                 confirmDeactivate = null
             },
             onDismiss = { confirmDeactivate = null },
+        )
+    }
+
+    if (confirmDisconnect) {
+        ConfirmDialog(
+            title = stringResource(R.string.sheets_disconnect),
+            message = stringResource(R.string.sheets_disconnect_confirm),
+            confirmLabel = stringResource(R.string.sheets_disconnect),
+            onConfirm = {
+                viewModel.disconnectGoogle()
+                confirmDisconnect = false
+            },
+            onDismiss = { confirmDisconnect = false },
         )
     }
 
@@ -433,6 +471,81 @@ private fun AddCoAdminFields(form: AddCoAdminForm, viewModel: ProfileViewModel) 
         )
         form.error?.let {
             Text(stringResource(it.messageRes()), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+        }
+    }
+}
+
+/**
+ * ORG-35: the Google account whose Drive keeps a sheet per event. Only phones signed in to that account
+ * update the sheets; other admins see who connected it.
+ */
+@Composable
+private fun SheetsBackupCard(
+    sheets: SheetsState,
+    connectedBy: String?,
+    connecting: Boolean,
+    onConnect: () -> Unit,
+    onSyncNow: () -> Unit,
+    onDisconnect: () -> Unit,
+) {
+    val connection = sheets.connection
+    ProfileCard {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(Icons.Default.TableChart, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                Text(
+                    stringResource(R.string.sheets_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+            val help = when {
+                connection == null -> stringResource(R.string.sheets_help_off)
+                connection.status == SheetsStatus.NEEDS_RECONNECT -> stringResource(R.string.sheets_needs_reconnect)
+                sheets.syncsFromThisPhone -> stringResource(R.string.sheets_help_on)
+                else -> stringResource(R.string.sheets_other_phone, connection.googleEmail)
+            }
+            if (connection != null) {
+                ContactRow(Icons.Default.Mail, stringResource(R.string.sheets_account), connection.googleEmail)
+                connectedBy?.let {
+                    Text(
+                        stringResource(R.string.sheets_connected_by, it),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.outline,
+                    )
+                }
+            }
+            Text(
+                help,
+                style = MaterialTheme.typography.bodySmall,
+                color = if (connection?.status == SheetsStatus.NEEDS_RECONNECT) {
+                    MaterialTheme.colorScheme.error
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                when {
+                    connection == null -> OutlinedButton(onClick = onConnect, enabled = !connecting) {
+                        Text(stringResource(R.string.sheets_connect))
+                    }
+                    connection.status == SheetsStatus.NEEDS_RECONNECT -> OutlinedButton(onClick = onConnect, enabled = !connecting) {
+                        Text(stringResource(R.string.sheets_reconnect))
+                    }
+                    sheets.syncsFromThisPhone -> OutlinedButton(onClick = onSyncNow) {
+                        Text(stringResource(R.string.sheets_sync_now))
+                    }
+                    else -> OutlinedButton(onClick = onConnect, enabled = !connecting) {
+                        Text(stringResource(R.string.sheets_use_this_phone))
+                    }
+                }
+                if (connection != null) {
+                    TextButton(onClick = onDisconnect) {
+                        Text(stringResource(R.string.sheets_disconnect), color = MaterialTheme.colorScheme.error)
+                    }
+                }
+            }
         }
     }
 }

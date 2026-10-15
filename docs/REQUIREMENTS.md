@@ -53,6 +53,7 @@ It consists of **two Android apps** backed by **one Firebase project**, with **n
 | Database | Cloud Firestore, offline persistence enabled |
 | Background work | Android WorkManager |
 | Email | Jakarta Mail (Android build) over Gmail SMTP (`smtp.gmail.com:587`, STARTTLS) |
+| Sheet backup | Google Identity Services authorization (`drive.file` scope) and the Sheets v4 / Drive v3 REST APIs, called from the phone |
 | Reports | Android `PdfDocument` for PDF, CSV for spreadsheets |
 | Min SDK | 26 (Android 8.0) |
 | Backend | **None.** No Cloud Functions, no custom server. |
@@ -109,6 +110,8 @@ Dates without time (due dates, expense dates, event dates) are stored as `"YYYY-
 
 **`config/mail`**: `senderEmail: String`, `appPassword: String`, `updatedAt: Timestamp`
 
+**`organizations/{orgId}/config/sheets`**: `googleEmail: String`, `connectedBy: uid`, `connectedAt: Timestamp`, `status: "connected" | "needs_reconnect"` (ORG-35)
+
 ### 6.2 `organizations/{orgId}`
 
 | Field | Type | Notes |
@@ -156,6 +159,9 @@ Dates without time (due dates, expense dates, event dates) are stored as `"YYYY-
 | totalCollected | Long (paise) | sum of payments, maintained with increments |
 | totalExpenses | Long (paise) | sum of expenses, maintained with increments |
 | createdAt, createdBy | | |
+| sheetId | String | optional; Google spreadsheet id of the event's sheet backup (ORG-36) |
+| sheetSyncedAt | Timestamp | optional; last successful sheet sync |
+| sheetHash | Long | optional; hash of the content last written, so unchanged events are skipped |
 
 **`…/events/{eventId}/eventMembers/{memberId}`** (doc id = memberId)
 
@@ -295,6 +301,18 @@ Dates without time (due dates, expense dates, event dates) are stored as `"YYYY-
 | ORG-29 | The job reads `config/mail`, the event, its eventMembers and schedules; builds the report; sends via Jakarta Mail over Gmail SMTP; sets `payment.emailStatus` to `sent`. After 5 failed attempts set `failed`; the Payments list offers Resend. |
 | ORG-30 | Email content: **Subject** `{Community} · {Event} · ₹{amount} from {Member} ({Due label})`. **Body**: the payment just recorded (member, schedule, due, amount, method, note, recorded by, time); event summary (opening balance, collected, expenses, balance); HTML table of all event members sorted by name with columns Member, Role, Paid so far, Due so far, Pending, Current due status. **Attachment**: same table as CSV. |
 
+### 8.9a Google Sheets backup
+
+A second copy of every due payment, outside Firestore, in the community's own Google Drive.
+
+| ID | Requirement |
+| --- | --- |
+| ORG-35 | Profile → **Google Sheets backup**: an admin connects one Google account for the community (scope `drive.file`: the app sees only files it creates). Saved in `config/sheets`; the phone remembers it is signed in to that account. Other admins see who connected it and can connect the same account on their phone. Disconnect stops syncing; sheets stay in Drive. If Google refuses the saved access, status becomes `needs_reconnect` and Profile asks to reconnect. |
+| ORG-36 | One spreadsheet per event, `{Community} - {Event}`, created with the event's first schedule. Its id is stored on the event in a transaction, so two phones can't both create one; a spreadsheet deleted in Drive is created again on the next sync. Event Overview shows the last sync time and **Open sheet**. |
+| ORG-37 | One tab per schedule, named after it. Layout: merged title `{EVENT} · {SCHEDULE}`; header `NO, NAME, DUE{n} - {MONTH}…, TOTAL` (year added when the schedule spans years); one row per event member (disabled members too) sorted by name, with the amount paid on each due in rupees (blank when nothing); `=SUM` totals per row and per column. Tabs are found by hidden developer metadata, so renamed schedules rename their tab, deleted schedules lose theirs, and tabs admins add by hand are left alone. |
+| ORG-38 | A WorkManager job (network required, backoff, 5 attempts) rewrites the event's tabs from Firestore after each payment, reversal, schedule change, event member change or event rename, plus an hourly job for all active events, which picks up payments recorded on other admins' phones. Only a phone signed in to the connected account syncs; on others the job does nothing. Unchanged events are skipped; **Sync now** rewrites everything. |
+| ORG-39 | The sheet mirrors the app: edits made in the sheet are overwritten on the next sync. Email backup (ORG-28) is independent and unaffected. |
+
 ### 8.10 WhatsApp status message
 
 | ID | Requirement |
@@ -428,7 +446,7 @@ Known trade-offs (accepted):
 | ID | Requirement |
 | --- | --- |
 | NFR-5 | All money arithmetic uses `Long` paise; formatting only at the UI edge. |
-| NFR-6 | Unit tests in `core` for due generation (BR-1 to BR-3), status calculation (BR-5), balance (BR-9), WhatsApp text (ORG-32, ORG-33) and email report building (ORG-30). |
+| NFR-6 | Unit tests in `core` for due generation (BR-1 to BR-3), status calculation (BR-5), balance (BR-9), WhatsApp text (ORG-32, ORG-33), email report building (ORG-30) and the sheet layout and sync (ORG-36, ORG-37). |
 | NFR-7 | Lists are paged / use Firestore queries with indexes; screens stay responsive with 500 members per community. |
 | NFR-8 | Material 3 theming with light and dark modes, per section 14 (UI theming). |
 | NFR-10 | English only. All user-visible text lives in `strings.xml` (no hard-coded strings in composables). |

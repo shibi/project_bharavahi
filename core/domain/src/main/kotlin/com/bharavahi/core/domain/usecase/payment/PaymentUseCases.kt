@@ -16,6 +16,7 @@ import com.bharavahi.core.domain.repository.OrgContext
 import com.bharavahi.core.domain.repository.PaymentBackupScheduler
 import com.bharavahi.core.domain.repository.PaymentRepository
 import com.bharavahi.core.domain.repository.ScheduleRepository
+import com.bharavahi.core.domain.repository.SheetSyncScheduler
 import com.bharavahi.core.domain.rules.MemberDuesRules
 import com.bharavahi.core.domain.rules.WhatsAppMessage
 import com.bharavahi.core.domain.usecase.domainResult
@@ -96,6 +97,7 @@ class RecordPaymentUseCase @Inject constructor(
     private val schedules: ScheduleRepository,
     private val payments: PaymentRepository,
     private val backup: PaymentBackupScheduler,
+    private val sheets: SheetSyncScheduler,
 ) {
     suspend operator fun invoke(eventId: String, payment: NewPayment): Result<String> = domainResult {
         val orgId = org.orgId()
@@ -104,6 +106,7 @@ class RecordPaymentUseCase @Inject constructor(
         validate(payment, schedule, member?.paidOn(payment.scheduleId, payment.dueIndex))
         val id = payments.record(orgId, eventId, payment.copy(note = payment.note.trim()))
         backup.enqueue(orgId, eventId, id)
+        sheets.enqueue(orgId, eventId)
         id
     }
 
@@ -133,6 +136,7 @@ class ReversePaymentUseCase @Inject constructor(
     private val org: OrgContext,
     private val payments: PaymentRepository,
     private val backup: PaymentBackupScheduler,
+    private val sheets: SheetSyncScheduler,
 ) {
     suspend operator fun invoke(eventId: String, paymentId: String, today: LocalDate): Result<String> = domainResult {
         val orgId = org.orgId()
@@ -150,6 +154,7 @@ class ReversePaymentUseCase @Inject constructor(
         )
         val id = payments.record(orgId, eventId, reversal, reversesPaymentId = original.id)
         backup.enqueue(orgId, eventId, id)
+        sheets.enqueue(orgId, eventId)
         id
     }
 }

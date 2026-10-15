@@ -22,6 +22,8 @@ import com.bharavahi.core.domain.usecase.event.UpdateEventRolesUseCase
 import com.bharavahi.core.domain.usecase.expense.ObserveExpensesUseCase
 import com.bharavahi.core.domain.usecase.payment.BuildWhatsAppMessageUseCase
 import com.bharavahi.core.domain.usecase.schedule.ObserveSchedulesUseCase
+import com.bharavahi.core.domain.usecase.sheets.ObserveSheetsStateUseCase
+import com.bharavahi.core.domain.usecase.sheets.SheetsState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,6 +33,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -70,7 +73,14 @@ class EventDetailViewModel @Inject constructor(
     private val setEventMemberRole: SetEventMemberRoleUseCase,
     private val removeEventMember: RemoveEventMemberUseCase,
     private val buildWhatsApp: BuildWhatsAppMessageUseCase,
+    observeSheets: ObserveSheetsStateUseCase,
 ) : ViewModel() {
+
+    /** ORG-36: whether sheet backup is on, for the Google Sheet row. Null until known. */
+    val sheets: StateFlow<SheetsState?> = observeSheets()
+        .map<SheetsState, SheetsState?> { it }
+        .catch { emit(null) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     val eventId: String = checkNotNull(savedStateHandle["eventId"])
 

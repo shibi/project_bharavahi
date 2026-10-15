@@ -1,5 +1,8 @@
 package com.bharavahi.org.ui.eventdetail
 
+import android.content.Intent
+import android.net.Uri
+import android.text.format.DateUtils
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -40,6 +43,7 @@ import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.PersonRemove
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.TableChart
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -71,6 +75,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bharavahi.core.domain.model.Event
+import com.bharavahi.core.domain.model.SheetsStatus
+import com.bharavahi.core.domain.usecase.sheets.SheetsState
 import com.bharavahi.core.domain.model.EventMember
 import com.bharavahi.core.domain.model.EventStatus
 import com.bharavahi.core.domain.model.Expense
@@ -112,6 +118,7 @@ fun EventDetailScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val rolesDialog by viewModel.rolesDialog.collectAsStateWithLifecycle()
+    val sheets by viewModel.sheets.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
     val context = LocalContext.current
     var confirmStatus by remember { mutableStateOf<EventStatus?>(null) }
@@ -186,6 +193,10 @@ fun EventDetailScreen(
                         members = state.members,
                         onClick = { onOpenSchedule(event.id, schedule.id) },
                     )
+                }
+                val sheetState = sheets
+                if (state.schedules.isNotEmpty() && sheetState != null) {
+                    item { SheetBackupRow(event, sheetState) }
                 }
 
                 item {
@@ -408,6 +419,42 @@ private fun SectionHeader(title: String, actionLabel: String, count: Int? = null
 @Composable
 private fun HelpText(text: String) {
     Text(text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+}
+
+/** ORG-36: where the event's Google Sheet backup stands, with a link to open it. */
+@Composable
+private fun SheetBackupRow(event: Event, sheets: SheetsState) {
+    val context = LocalContext.current
+    val connection = sheets.connection
+    val sheetId = event.sheetId
+    val status = when {
+        connection == null -> stringResource(R.string.sheets_event_off)
+        connection.status == SheetsStatus.NEEDS_RECONNECT -> stringResource(R.string.sheets_event_paused)
+        sheetId == null -> stringResource(R.string.sheets_event_pending)
+        else -> event.sheetSyncedAtMillis?.let {
+            stringResource(R.string.sheets_event_synced, DateUtils.getRelativeTimeSpanString(it).toString())
+        } ?: stringResource(R.string.sheets_event_pending)
+    }
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+    ) {
+        Icon(Icons.Default.TableChart, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+        Text(
+            status,
+            style = MaterialTheme.typography.bodySmall,
+            color = if (connection?.status == SheetsStatus.NEEDS_RECONNECT) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f),
+        )
+        if (sheetId != null) {
+            TextButton(onClick = {
+                runCatching {
+                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://docs.google.com/spreadsheets/d/$sheetId")))
+                }
+            }) { Text(stringResource(R.string.sheets_open)) }
+        }
+    }
 }
 
 /**

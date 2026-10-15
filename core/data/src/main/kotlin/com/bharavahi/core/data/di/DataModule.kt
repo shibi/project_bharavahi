@@ -14,7 +14,9 @@ import com.bharavahi.core.data.firebase.FirestoreActivityRepository
 import com.bharavahi.core.data.firebase.FirestoreMailConfigRepository
 import com.bharavahi.core.data.firebase.FirestoreOrgAdminRepository
 import com.bharavahi.core.data.firebase.FirestoreOrganizationRepository
+import com.bharavahi.core.data.firebase.FirestoreSheetsConfigRepository
 import com.bharavahi.core.data.firebase.FirestoreSuperAdminRepository
+import com.bharavahi.core.data.sheets.GoogleSheetsRestGateway
 import com.bharavahi.core.data.preferences.DataStoreThemePreferenceRepository
 import com.bharavahi.core.domain.repository.ActivityRepository
 import com.bharavahi.core.domain.repository.AdminIndexRepository
@@ -30,6 +32,8 @@ import com.bharavahi.core.domain.repository.AuthRepository
 import com.bharavahi.core.domain.repository.MailConfigRepository
 import com.bharavahi.core.domain.repository.OrgAdminRepository
 import com.bharavahi.core.domain.repository.OrganizationRepository
+import com.bharavahi.core.domain.repository.SheetsConfigRepository
+import com.bharavahi.core.domain.repository.SpreadsheetGateway
 import com.bharavahi.core.domain.repository.SuperAdminRepository
 import com.bharavahi.core.domain.repository.ThemePreferenceRepository
 import com.google.firebase.auth.FirebaseAuth
@@ -80,4 +84,6 @@ internal abstract class RepositoryModule {
     @Binds abstract fun paymentRepository(impl: FirestorePaymentRepository): PaymentRepository
     @Binds abstract fun expenseRepository(impl: FirestoreExpenseRepository): ExpenseRepository
     @Binds abstract fun mailSender(impl: GmailSmtpMailSender): MailSender
+    @Binds abstract fun sheetsConfigRepository(impl: FirestoreSheetsConfigRepository): SheetsConfigRepository
+    @Binds abstract fun spreadsheetGateway(impl: GoogleSheetsRestGateway): SpreadsheetGateway
 }

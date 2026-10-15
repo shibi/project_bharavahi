@@ -10,6 +10,7 @@ import com.bharavahi.core.domain.model.EventStatus
 import com.bharavahi.core.domain.model.NewEvent
 import com.bharavahi.core.domain.repository.EventRepository
 import com.bharavahi.core.domain.repository.OrgContext
+import com.bharavahi.core.domain.repository.SheetSyncScheduler
 import com.bharavahi.core.domain.usecase.domainResult
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emitAll
@@ -59,10 +60,13 @@ class CreateEventUseCase @Inject constructor(
 class UpdateEventDetailsUseCase @Inject constructor(
     private val org: OrgContext,
     private val events: EventRepository,
+    private val sheets: SheetSyncScheduler,
 ) {
     suspend operator fun invoke(eventId: String, details: EventDetails): Result<Unit> = domainResult {
         validating { validateEventDetails(details) }
-        events.updateDetails(org.orgId(), eventId, details.trimmed())
+        val orgId = org.orgId()
+        events.updateDetails(orgId, eventId, details.trimmed())
+        sheets.enqueue(orgId, eventId)
     }
 }
 
@@ -104,9 +108,13 @@ class ObserveEventMembersUseCase @Inject constructor(
 class AddEventMembersUseCase @Inject constructor(
     private val org: OrgContext,
     private val events: EventRepository,
+    private val sheets: SheetSyncScheduler,
 ) {
     suspend operator fun invoke(eventId: String, members: List<EventMemberAssignment>): Result<Unit> = domainResult {
-        if (members.isNotEmpty()) events.addMembers(org.orgId(), eventId, members.distinctBy { it.memberId })
+        if (members.isEmpty()) return@domainResult
+        val orgId = org.orgId()
+        events.addMembers(orgId, eventId, members.distinctBy { it.memberId })
+        sheets.enqueue(orgId, eventId)
     }
 }
 
@@ -123,6 +131,7 @@ class SetEventMemberRoleUseCase @Inject constructor(
 class RemoveEventMemberUseCase @Inject constructor(
     private val org: OrgContext,
     private val events: EventRepository,
+    private val sheets: SheetSyncScheduler,
 ) {
     suspend operator fun invoke(eventId: String, memberId: String): Result<Unit> = domainResult {
         val orgId = org.orgId()
@@ -130,5 +139,6 @@ class RemoveEventMemberUseCase @Inject constructor(
             ?: throw DomainException.NotFound()
         if (member.totalPaid != 0L || member.paidByDue.values.any { it != 0L }) throw DomainException.MemberHasPayments()
         events.removeMember(orgId, eventId, memberId)
+        sheets.enqueue(orgId, eventId)
     }
 }

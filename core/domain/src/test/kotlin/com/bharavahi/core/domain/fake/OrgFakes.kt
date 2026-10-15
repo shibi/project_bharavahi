@@ -19,6 +19,7 @@ import com.bharavahi.core.domain.repository.AdminIndexRepository
 import com.bharavahi.core.domain.repository.EventRepository
 import com.bharavahi.core.domain.repository.OrgContext
 import com.bharavahi.core.domain.repository.ScheduleRepository
+import com.bharavahi.core.domain.repository.SheetSyncScheduler
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
@@ -78,6 +79,22 @@ class FakeEventRepository : EventRepository {
     override suspend fun removeMember(orgId: String, eventId: String, memberId: String) {
         members.value -= memberId
     }
+    override suspend fun claimSheetId(orgId: String, eventId: String, expected: String?, sheetId: String): String {
+        val event = events.value.getValue(eventId)
+        if (event.sheetId != expected) return event.sheetId!!
+        events.value += eventId to event.copy(sheetId = sheetId)
+        return sheetId
+    }
+    override suspend fun setSheetSynced(orgId: String, eventId: String, hash: Int) {
+        events.value += eventId to events.value.getValue(eventId).copy(sheetHash = hash, sheetSyncedAtMillis = 1L)
+    }
+}
+
+class FakeSheetSyncScheduler : SheetSyncScheduler {
+    val queued = mutableListOf<String>()
+    var all = 0
+    override fun enqueue(orgId: String, eventId: String) { queued += eventId }
+    override fun enqueueAll() { all++ }
 }
 
 fun eventMember(

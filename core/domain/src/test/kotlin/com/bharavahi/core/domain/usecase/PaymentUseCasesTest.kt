@@ -8,6 +8,7 @@ import com.bharavahi.core.domain.fake.FakeEventRepository
 import com.bharavahi.core.domain.fake.FakeOrgContext
 import com.bharavahi.core.domain.fake.FakePaymentRepository
 import com.bharavahi.core.domain.fake.FakeScheduleRepository
+import com.bharavahi.core.domain.fake.FakeSheetSyncScheduler
 import com.bharavahi.core.domain.fake.eventMember
 import com.bharavahi.core.domain.model.NewExpense
 import com.bharavahi.core.domain.model.NewPayment
@@ -36,7 +37,8 @@ class PaymentUseCasesTest {
     private val schedules = FakeScheduleRepository().apply { schedules.value = mapOf("s1" to schedule) }
     private val payments = FakePaymentRepository()
     private val backup = FakeBackupScheduler()
-    private val record = RecordPaymentUseCase(FakeOrgContext(), events, schedules, payments, backup)
+    private val sheets = FakeSheetSyncScheduler()
+    private val record = RecordPaymentUseCase(FakeOrgContext(), events, schedules, payments, backup, sheets)
 
     private fun pay(amount: Long, due: Int = 0) =
         NewPayment("m1", "s1", due, amount, PaymentMethod.OFFLINE, " cash ", LocalDate.parse("2026-01-05"))
@@ -46,6 +48,7 @@ class PaymentUseCasesTest {
         val id = record("e1", pay(30_000)).getOrThrow()
         assertThat(payments.payments.value.single().note).isEqualTo("cash")
         assertThat(backup.queued).containsExactly(id)
+        assertThat(sheets.queued).containsExactly("e1")
     }
 
     @Test
@@ -53,6 +56,7 @@ class PaymentUseCasesTest {
         val error = record("e1", pay(30_001)).exceptionOrNull() as DomainException.Validation
         assertThat(error.errors).containsEntry(Field.AMOUNT, ValidationError.AMOUNT_TOO_LARGE)
         assertThat(backup.queued).isEmpty()
+        assertThat(sheets.queued).isEmpty()
     }
 
     @Test
@@ -73,7 +77,7 @@ class PaymentUseCasesTest {
     @Test
     fun `ORG-25 reversal is a negative linked entry and only once`() = runTest {
         val id = record("e1", pay(30_000)).getOrThrow()
-        val reverse = ReversePaymentUseCase(FakeOrgContext(), payments, backup)
+        val reverse = ReversePaymentUseCase(FakeOrgContext(), payments, backup, sheets)
         val reversalId = reverse("e1", id, LocalDate.parse("2026-01-06")).getOrThrow()
         val reversal = payments.payments.value.first { it.id == reversalId }
         assertThat(reversal.amount).isEqualTo(-30_000)

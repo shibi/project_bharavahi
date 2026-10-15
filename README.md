@@ -46,6 +46,16 @@ type-safe routes, Firebase Auth + Firestore (offline cache on), DataStore. Min S
    Gmail account, turn on 2-step verification, create an **App password**, and enter the address and
    app password in the Super Admin app under **Settings → Payment backup email sender**. Until then payments still save, and
    their backup email shows as failed with a Resend button.
+7. **Google Sheets backup (once per Firebase project).** In the [Google Cloud console](https://console.cloud.google.com)
+   for the Firebase project:
+   - **APIs & Services → Library**: enable **Google Sheets API** and **Google Drive API**.
+   - **OAuth consent screen**: user type *External*, add the scope `.../auth/drive.file`, then **Publish app**
+     (In production). `drive.file` is a non-sensitive scope, so Google does not need to review the app.
+   - **Credentials → Create credentials → OAuth client ID → Android**: package `com.bharavahi.org` and the
+     SHA-1 of each signing key (`./gradlew :app-org:signingReport` shows the debug one). Add one client per key.
+
+   Then a community admin opens **Profile → Google Sheets backup → Connect Google account**. Each event gets a
+   spreadsheet in that account's Drive, with one tab per schedule.
 
 ## Theming
 

@@ -9,6 +9,7 @@ import com.bharavahi.core.domain.fake.FakeEventRepository
 import com.bharavahi.core.domain.fake.FakeOrgContext
 import com.bharavahi.core.domain.fake.FakeOrganizationRepository
 import com.bharavahi.core.domain.fake.FakeScheduleRepository
+import com.bharavahi.core.domain.fake.FakeSheetSyncScheduler
 import com.bharavahi.core.domain.fake.eventMember
 import com.bharavahi.core.domain.fake.org
 import com.bharavahi.core.domain.model.AdminLink
@@ -201,7 +202,7 @@ class EventUseCasesTest {
     @Test
     fun `member with payments cannot be removed`() = runTest {
         events.members.value = mapOf("m1" to eventMember("m1", paidByDue = mapOf("s1_0" to 100L)), "m2" to eventMember("m2"))
-        val remove = RemoveEventMemberUseCase(FakeOrgContext(), events)
+        val remove = RemoveEventMemberUseCase(FakeOrgContext(), events, FakeSheetSyncScheduler())
         assertThat(remove("e1", "m1").exceptionOrNull()).isInstanceOf(DomainException.MemberHasPayments::class.java)
         assertThat(remove("e1", "m2").isSuccess).isTrue()
         assertThat(events.members.value.keys).containsExactly("m1")
@@ -210,6 +211,7 @@ class EventUseCasesTest {
 
 class ScheduleUseCasesTest {
     private val schedules = FakeScheduleRepository()
+    private val sheets = FakeSheetSyncScheduler()
     private val details = ScheduleDetails(
         name = "Monthly",
         description = "",
@@ -221,11 +223,12 @@ class ScheduleUseCasesTest {
 
     @Test
     fun `create generates and saves the dues`() = runTest {
-        val id = CreateScheduleUseCase(FakeOrgContext(), schedules)("e1", details).getOrThrow()
+        val id = CreateScheduleUseCase(FakeOrgContext(), schedules, sheets)("e1", details).getOrThrow()
         val saved = schedules.schedules.value.getValue(id)
         assertThat(saved.dues).hasSize(12)
         assertThat(saved.dues.first().amount).isEqualTo(25_000)
         assertThat(saved.locked).isFalse()
+        assertThat(sheets.queued).containsExactly("e1")
     }
 
     @Test
@@ -244,9 +247,9 @@ class ScheduleUseCasesTest {
 
     @Test
     fun `ORG-16 locked schedule cannot be edited`() = runTest {
-        val id = CreateScheduleUseCase(FakeOrgContext(), schedules)("e1", details).getOrThrow()
+        val id = CreateScheduleUseCase(FakeOrgContext(), schedules, sheets)("e1", details).getOrThrow()
         schedules.schedules.value = schedules.schedules.value.mapValues { it.value.copy(locked = true) }
-        val result = UpdateScheduleUseCase(FakeOrgContext(), schedules)("e1", id, details.copy(name = "New"))
+        val result = UpdateScheduleUseCase(FakeOrgContext(), schedules, sheets)("e1", id, details.copy(name = "New"))
         assertThat(result.exceptionOrNull()).isInstanceOf(DomainException.ScheduleLocked::class.java)
     }
 }

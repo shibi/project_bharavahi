@@ -9,6 +9,7 @@ internal object FirestorePaths {
     const val ACTIVITY = "activity"
     const val CONFIG = "config"
     const val MAIL = "mail"
+    const val SHEETS = "sheets"
     const val MEMBERS = "members"
     const val EVENTS = "events"
     const val EVENT_MEMBERS = "eventMembers"
@@ -48,6 +49,14 @@ internal object FirestorePaths {
         const val AT = "at"
     }
 
+    /** `organizations/{orgId}/config/sheets`. */
+    object Sheets {
+        const val GOOGLE_EMAIL = "googleEmail"
+        const val CONNECTED_BY = "connectedBy"
+        const val CONNECTED_AT = "connectedAt"
+        const val STATUS = "status"
+    }
+
     object Mail {
         const val SENDER_EMAIL = "senderEmail"
         const val APP_PASSWORD = "appPassword"
@@ -81,6 +90,9 @@ internal object FirestorePaths {
         const val TOTAL_EXPENSES = "totalExpenses"
         const val CREATED_AT = "createdAt"
         const val CREATED_BY = "createdBy"
+        const val SHEET_ID = "sheetId"
+        const val SHEET_SYNCED_AT = "sheetSyncedAt"
+        const val SHEET_HASH = "sheetHash"
     }
 
     object Role {

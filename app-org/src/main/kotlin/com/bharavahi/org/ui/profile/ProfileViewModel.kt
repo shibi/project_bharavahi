@@ -17,6 +17,11 @@ import com.bharavahi.core.domain.usecase.orgadmin.SetCoAdminActiveUseCase
 import com.bharavahi.core.domain.usecase.orgauth.ObserveAdminSessionUseCase
 import com.bharavahi.core.domain.usecase.settings.ObserveThemeModeUseCase
 import com.bharavahi.core.domain.usecase.settings.SetThemeModeUseCase
+import com.bharavahi.core.domain.usecase.sheets.ConnectSheetsUseCase
+import com.bharavahi.core.domain.usecase.sheets.DisconnectSheetsUseCase
+import com.bharavahi.core.domain.usecase.sheets.ObserveSheetsStateUseCase
+import com.bharavahi.core.domain.usecase.sheets.SheetsState
+import com.bharavahi.core.domain.usecase.sheets.SyncAllSheetsNowUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -24,6 +29,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -38,6 +44,9 @@ data class ProfileUiState(
     val activeCount: Int = 0,
     /** A failed activate/deactivate; shown as a message. */
     val actionError: Throwable? = null,
+    /** Google Sheets backup (ORG-35); null until it loads. */
+    val sheets: SheetsState? = null,
+    val connectingSheets: Boolean = false,
 ) {
     val maxAdmins: Int get() = MAX_ACTIVE_ADMINS
     val openSlots: Int get() = (MAX_ACTIVE_ADMINS - activeCount).coerceAtLeast(0)
@@ -64,15 +73,22 @@ class ProfileViewModel @Inject constructor(
     private val signOutUseCase: SignOutUseCase,
     private val addCoAdmin: AddCoAdminUseCase,
     private val setCoAdminActive: SetCoAdminActiveUseCase,
+    observeSheets: ObserveSheetsStateUseCase,
+    private val connectSheets: ConnectSheetsUseCase,
+    private val disconnectSheets: DisconnectSheetsUseCase,
+    private val syncAllSheetsNow: SyncAllSheetsNowUseCase,
 ) : ViewModel() {
 
     private val actionError = MutableStateFlow<Throwable?>(null)
+    private val connectingSheets = MutableStateFlow(false)
 
     val state: StateFlow<ProfileUiState> = combine(
         observeSession(),
         observeAdmins().onStart { emit(emptyList()) }.catch { emit(emptyList()) },
         actionError,
-    ) { session, admins, error ->
+        observeSheets().map<SheetsState, SheetsState?> { it }.catch { emit(null) },
+        connectingSheets,
+    ) { session, admins, error, sheets, connecting ->
         val user = (session as? AdminSessionState.SignedIn)?.user
         ProfileUiState(
             email = user?.email.orEmpty(),
@@ -80,8 +96,28 @@ class ProfileViewModel @Inject constructor(
             coAdmins = admins.filter { it.uid != user?.uid }.sortedByDescending { it.active },
             activeCount = admins.count { it.active },
             actionError = error,
+            sheets = sheets,
+            connectingSheets = connecting,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ProfileUiState())
+
+    /** Called with the token Google returned after the admin approved access. */
+    fun onGoogleAuthorized(accessToken: String) {
+        if (connectingSheets.value) return
+        connectingSheets.value = true
+        viewModelScope.launch {
+            connectSheets(accessToken).onFailure { actionError.value = it }
+            connectingSheets.value = false
+        }
+    }
+
+    fun onGoogleAuthFailed(error: Throwable) { actionError.value = error }
+
+    fun syncSheetsNow() = syncAllSheetsNow()
+
+    fun disconnectGoogle() {
+        viewModelScope.launch { disconnectSheets().onFailure { actionError.value = it } }
+    }
 
     val themeMode: StateFlow<ThemeMode> = observeThemeMode()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ThemeMode.SYSTEM)
