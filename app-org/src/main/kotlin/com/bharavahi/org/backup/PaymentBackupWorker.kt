@@ -1,6 +1,7 @@
 package com.bharavahi.org.backup
 
 import android.content.Context
+import android.util.Log
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
@@ -31,6 +32,7 @@ class PaymentBackupWorker @AssistedInject constructor(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
+            Log.w(TAG, "Backup email for payment $paymentId failed (attempt ${runAttemptCount + 1} of $MAX_ATTEMPTS)", e)
             if (runAttemptCount + 1 >= MAX_ATTEMPTS) {
                 runCatching { sendBackup.markFailed(orgId, eventId, paymentId) }
                 Result.failure()
@@ -45,6 +47,7 @@ class PaymentBackupWorker @AssistedInject constructor(
         const val KEY_EVENT_ID = "eventId"
         const val KEY_PAYMENT_ID = "paymentId"
         const val MAX_ATTEMPTS = 5
+        private const val TAG = "PaymentBackup"
         private val RECORDED_AT = DateTimeFormatter.ofPattern("d MMM yyyy, h:mm a", Locale.ENGLISH)
     }
 }

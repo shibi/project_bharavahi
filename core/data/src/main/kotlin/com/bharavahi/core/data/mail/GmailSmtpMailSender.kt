@@ -1,5 +1,6 @@
 package com.bharavahi.core.data.mail
 
+import android.util.Log
 import com.bharavahi.core.domain.error.DomainException
 import com.bharavahi.core.domain.model.MailConfig
 import com.bharavahi.core.domain.repository.MailSender
@@ -63,6 +64,8 @@ internal class GmailSmtpMailSender @Inject constructor() : MailSender {
         try {
             Transport.send(message)
         } catch (e: AuthenticationFailedException) {
+            // Gmail's reason, e.g. "535-5.7.8 Username and Password not accepted"; the domain error has no cause.
+            Log.w(TAG, "Gmail refused ${config.senderEmail}: ${e.message}")
             throw DomainException.MailNotConfigured()
         } catch (e: MessagingException) {
             throw DomainException.Network(e)
@@ -70,6 +73,7 @@ internal class GmailSmtpMailSender @Inject constructor() : MailSender {
     }
 
     private companion object {
+        const val TAG = "PaymentBackup"
         const val HOST = "smtp.gmail.com"
         const val PORT = "587"
         const val TIMEOUT_MILLIS = "20000"
