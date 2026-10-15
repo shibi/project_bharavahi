@@ -109,12 +109,13 @@ fun DashboardScreen(
                     EventProgressCard(progress, onClick = { onOpenEvent(progress.event.id) })
                 }
                 if (dashboard.recentPayments.isNotEmpty()) {
-                    val firstEventId = dashboard.events.firstOrNull()?.event?.id
+                    // Payments are listed per event: open the one the latest payment belongs to.
+                    val latestEventId = dashboard.recentPayments.first().eventId
                     item {
                         SectionHeader(
                             stringResource(R.string.dashboard_recent_payments),
-                            stringResource(R.string.dashboard_see_all).takeIf { firstEventId != null },
-                        ) { firstEventId?.let(onSeeAllPayments) }
+                            stringResource(R.string.dashboard_see_all),
+                        ) { onSeeAllPayments(latestEventId) }
                     }
                     item { RecentPaymentsCard(dashboard.recentPayments) }
                 }
@@ -182,7 +183,7 @@ private fun SectionHeader(title: String, action: String?, onAction: () -> Unit) 
     }
 }
 
-/** UI-11: the teal hero card with a progress ring for the first active event. */
+/** UI-11: the teal hero card with a progress ring across all active events. */
 @Composable
 private fun HeroCard(dashboard: OrgDashboard, onCollectDues: () -> Unit) {
     val first = dashboard.events.firstOrNull()
@@ -239,7 +240,7 @@ private fun HeroCard(dashboard: OrgDashboard, onCollectDues: () -> Unit) {
                     }
                 }
                 if (first != null) {
-                    ProgressRing(first.progress, MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.onPrimary)
+                    ProgressRing(dashboard.progress,MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.onPrimary)
                 }
             }
             Button(

@@ -127,7 +127,7 @@ fun EventsScreen(
                     contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 96.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    item { FundsSummaryCard(state.totalCollected) }
+                    item { FundsSummaryCard(state.totalCollected, state.totalExpected) }
                     if (state.visible.isEmpty()) {
                         item { MessageContent(stringResource(R.string.events_no_match)) }
                     }
@@ -173,9 +173,9 @@ private fun StatusChip(label: String, selected: Boolean, onClick: () -> Unit) {
     )
 }
 
-/** Design: tinted summary strip with a wallet icon and everything collected across events. */
+/** Design: tinted summary strip with a wallet icon, everything collected across events and the sum of their totals. */
 @Composable
-private fun FundsSummaryCard(totalCollected: Long) {
+private fun FundsSummaryCard(totalCollected: Long, totalExpected: Long) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -216,6 +216,11 @@ private fun FundsSummaryCard(totalCollected: Long) {
                     modifier = Modifier.padding(bottom = 3.dp),
                 )
             }
+            Text(
+                stringResource(R.string.events_total_expected, formatRupees(totalExpected)),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }

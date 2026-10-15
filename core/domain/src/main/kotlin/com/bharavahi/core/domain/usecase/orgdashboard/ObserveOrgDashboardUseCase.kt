@@ -13,6 +13,7 @@ import com.bharavahi.core.domain.repository.PaymentRepository
 import com.bharavahi.core.domain.repository.ScheduleRepository
 import com.bharavahi.core.domain.rules.DueStatusRules
 import com.bharavahi.core.domain.rules.MemberDuesRules
+import com.bharavahi.core.domain.usecase.event.ObserveExpectedTotalUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -39,7 +40,7 @@ data class EventProgress(
     val progress: Float get() = if (expected <= 0) 0f else (event.totalCollected.toFloat() / expected).coerceIn(0f, 1f)
 }
 
-data class RecentPayment(val eventName: String, val memberName: String, val payment: Payment)
+data class RecentPayment(val eventId: String, val eventName: String, val memberName: String, val payment: Payment)
 
 data class OrgDashboard(
     val communityName: String,
@@ -48,6 +49,12 @@ data class OrgDashboard(
     val recentPayments: List<RecentPayment>,
 ) {
     val activeEvents: List<Event> get() = events.map { it.event }
+
+    /** 0..1 share of every active event's expected total collected so far, for the hero ring (UI-11). */
+    val progress: Float get() {
+        val expected = events.sumOf { it.expected }
+        return if (expected <= 0) 0f else (activeEvents.sumOf { it.totalCollected }.toFloat() / expected).coerceIn(0f, 1f)
+    }
 }
 
 /** ORG-5: member count, active events with their progress, pending current dues and recent payments. */
@@ -102,11 +109,11 @@ class ObserveOrgDashboardUseCase @Inject constructor(
             val names = memberList.associate { it.memberId to it.name }
             EventProgress(
                 event = event,
-                expected = active.size * scheduleList.sumOf { it.amountPerMember },
+                expected = ObserveExpectedTotalUseCase.expectedTotal(memberList, scheduleList),
                 collectedThisPeriod = active.sumOf { m -> currentDues.sumOf { (sid, idx) -> m.paidOn(sid, idx) } },
                 pendingMembers = dues.count { it.currentStatus != DueStatus.PAID },
             ) to paymentList.take(RECENT_PAYMENTS).map {
-                RecentPayment(event.name, names[it.memberId] ?: "", it)
+                RecentPayment(event.id, event.name, names[it.memberId] ?: "", it)
             }
         }
 

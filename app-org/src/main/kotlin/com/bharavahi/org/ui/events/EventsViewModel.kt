@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.bharavahi.core.domain.model.Event
 import com.bharavahi.core.domain.model.EventStatus
 import com.bharavahi.core.domain.usecase.event.ObserveEventsUseCase
+import com.bharavahi.core.domain.usecase.event.ObserveExpectedTotalUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,6 +15,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
@@ -24,6 +26,8 @@ data class EventsUiState(
     val statusCounts: Map<EventStatus, Int> = emptyMap(),
     /** Collected across every event of the community, for the summary card. */
     val totalCollected: Long = 0L,
+    /** Sum of every event's expected total: active members times the schedules' per-member amounts. */
+    val totalExpected: Long = 0L,
     val visible: List<Event> = emptyList(),
     val error: Throwable? = null,
 )
@@ -33,6 +37,7 @@ data class EventsUiState(
 @HiltViewModel
 class EventsViewModel @Inject constructor(
     observeEvents: ObserveEventsUseCase,
+    observeExpectedTotal: ObserveExpectedTotalUseCase,
 ) : ViewModel() {
 
     private val statusFilter = MutableStateFlow<EventStatus?>(null)
@@ -44,8 +49,13 @@ class EventsViewModel @Inject constructor(
             .catch { emit(Result.failure(it)) }
     }
 
+    // Only the summary card needs it, so a failure there must not hide the list.
+    private val expectedTotal = retry.flatMapLatest {
+        observeExpectedTotal().onStart { emit(0L) }.catch { emit(0L) }
+    }
+
     val state: StateFlow<EventsUiState> =
-        combine(events, statusFilter) { result, status ->
+        combine(events, expectedTotal, statusFilter) { result, expected, status ->
             val all = result.getOrDefault(emptyList())
             EventsUiState(
                 statusFilter = status,
@@ -53,6 +63,7 @@ class EventsViewModel @Inject constructor(
                 totalCount = all.size,
                 statusCounts = all.groupingBy { it.status }.eachCount(),
                 totalCollected = all.sumOf { it.totalCollected },
+                totalExpected = expected,
                 visible = ObserveEventsUseCase.filter(all, status),
                 error = result.exceptionOrNull(),
             )
