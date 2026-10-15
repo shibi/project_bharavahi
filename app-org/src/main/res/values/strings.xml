@@ -140,6 +140,7 @@
     <string name="event_total_collected">Collected</string>
     <string name="event_balance_label">Balance</string>
     <string name="event_total_expenses">Expenses</string>
+    <string name="event_pending_dues">Pending dues</string>
     <string name="event_schedules">Schedules</string>
     <string name="event_no_schedules">No schedules yet. Add one to split the amount each member owes into dues.</string>
     <string name="event_roles">Roles</string>
@@ -266,6 +267,9 @@
     </plurals>
 
     <string name="event_members_dues">Members &amp; dues</string>
+    <string name="event_members_short">Members (%1$d)</string>
+    <string name="event_add_expense_short">+ Expense</string>
+    <string name="event_whatsapp_short">WhatsApp</string>
 
     <string name="payment_event">Event</string>
     <string name="payment_member">Member</string>

@@ -6,10 +6,12 @@ import android.text.format.DateUtils
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material.icons.filled.AttachMoney
+import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.OutlinedButton
@@ -166,14 +168,14 @@ fun EventDetailScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                item { Overview(event) }
+                item { Overview(event, state.pendingDues) }
                 item {
                     EventActions(
                         memberCount = state.members.size,
                         onMarkPayment = { onMarkPayment(event.id) },
-                        onOpenDues = { onOpenDues(event.id) },
+                        onAddExpense = { onAddExpense(event.id) },
                         onOpenPayments = { onOpenPayments(event.id) },
-                        onOpenExpenses = { onOpenExpenses(event.id) },
+                        onOpenDues = { onOpenDues(event.id) },
                         onShare = {
                             scope.launch {
                                 viewModel.whatsAppText()
@@ -315,9 +317,9 @@ fun EventDetailScreen(
     }
 }
 
-/** ORG-13: current balance with the opening/collected/expenses breakdown and an income-vs-outflow bar (BR-9). */
+/** ORG-13: current balance with the opening/collected/expenses/pending breakdown and an income-vs-outflow bar (BR-9). */
 @Composable
-private fun Overview(event: Event) {
+private fun Overview(event: Event, pendingDues: Long) {
     val onPrimary = MaterialTheme.colorScheme.onPrimary
     val inflow = Color(0xFFBCE9FD)
     val outflow = MaterialTheme.colorScheme.secondary
@@ -358,7 +360,10 @@ private fun Overview(event: Event) {
                 StatTile(R.string.event_opening_balance_short, event.openingBalance, null, Modifier.weight(1f))
                 StatTile(R.string.event_total_collected, event.totalCollected, inflow, Modifier.weight(1f))
             }
-            StatTile(R.string.event_total_expenses, event.totalExpenses, outflow, Modifier.fillMaxWidth())
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                StatTile(R.string.event_total_expenses, event.totalExpenses, outflow, Modifier.weight(1f))
+                StatTile(R.string.event_pending_dues, pendingDues, null, Modifier.weight(1f))
+            }
             if (total > 0) {
                 Row(
                     Modifier.fillMaxWidth().padding(top = 8.dp).height(10.dp).clip(CircleShape).background(Color.Black.copy(alpha = 0.2f)),
@@ -860,36 +865,112 @@ private fun EventStatus.confirmRes(): Int = when (this) {
     EventStatus.CLOSED -> R.string.event_confirm_close
 }
 
-/** Entry points: payments, member dues, expenses and the WhatsApp list, as one scrollable chip row. */
+/**
+ * Design: Mark Payment (amber) and + Expense side by side, then Payments, Members (dues) and WhatsApp as
+ * icon-over-label tiles. The expense list itself opens from the recent expenses card.
+ */
 @Composable
 private fun EventActions(
     memberCount: Int,
     onMarkPayment: () -> Unit,
-    onOpenDues: () -> Unit,
+    onAddExpense: () -> Unit,
     onOpenPayments: () -> Unit,
-    onOpenExpenses: () -> Unit,
+    onOpenDues: () -> Unit,
     onShare: () -> Unit,
 ) {
-    val outline = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.horizontalScroll(rememberScrollState()),
+    val shape = RoundedCornerShape(16.dp)
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 4.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(
+                onClick = onMarkPayment,
+                shape = shape,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.secondary,
+                    contentColor = MaterialTheme.colorScheme.onSecondary,
+                ),
+                modifier = Modifier.weight(1f).height(52.dp),
+            ) {
+                Icon(Icons.Default.AttachMoney, contentDescription = null, modifier = Modifier.size(20.dp))
+                Text(stringResource(R.string.mark_payment), fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 6.dp))
+            }
+            OutlinedButton(
+                onClick = onAddExpense,
+                shape = shape,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                modifier = Modifier.weight(1f).height(52.dp),
+            ) {
+                Icon(
+                    Icons.AutoMirrored.Filled.ReceiptLong,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.tertiary,
+                    modifier = Modifier.size(20.dp),
+                )
+                Text(
+                    stringResource(R.string.event_add_expense_short),
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(start = 6.dp),
+                )
+            }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            ActionTile(
+                label = stringResource(R.string.payments_title),
+                onClick = onOpenPayments,
+                modifier = Modifier.weight(1f),
+            ) { Icon(Icons.Default.Payments, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
+            ActionTile(
+                label = stringResource(R.string.event_members_short, memberCount),
+                onClick = onOpenDues,
+                modifier = Modifier.weight(1f),
+            ) { Icon(Icons.Default.Groups, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
+            ActionTile(
+                label = stringResource(R.string.event_whatsapp_short),
+                onClick = onShare,
+                accent = LocalStatusColors.current.paid,
+                modifier = Modifier.weight(1f),
+            ) {
+                // The real logo keeps its own brand colours.
+                Icon(painterResource(R.drawable.ic_whatsapp), contentDescription = null, tint = Color.Unspecified)
+            }
+        }
+    }
+}
+
+/** Outlined tile with an icon above its label; an [accent] tints the tile and its label. */
+@Composable
+private fun ActionTile(
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    accent: Color? = null,
+    icon: @Composable () -> Unit,
+) {
+    val shape = RoundedCornerShape(16.dp)
+    Card(
+        onClick = onClick,
+        shape = shape,
+        colors = CardDefaults.cardColors(
+            containerColor = accent?.copy(alpha = 0.12f)?.compositeOver(MaterialTheme.colorScheme.surface)
+                ?: MaterialTheme.colorScheme.surface,
+        ),
+        border = BorderStroke(1.dp, accent?.copy(alpha = 0.3f) ?: MaterialTheme.colorScheme.outlineVariant),
+        modifier = modifier.height(72.dp),
     ) {
-        Button(
-            onClick = onMarkPayment,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.secondary,
-                contentColor = MaterialTheme.colorScheme.onSecondary,
-            ),
-        ) { Text(stringResource(R.string.mark_payment)) }
-        OutlinedButton(
-            onClick = onOpenDues,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
-        ) { Text(stringResource(R.string.event_members_dues) + " ($memberCount)", color = MaterialTheme.colorScheme.primary) }
-        OutlinedButton(onClick = onOpenPayments, border = outline) { Text(stringResource(R.string.payments_title)) }
-        OutlinedButton(onClick = onOpenExpenses, border = outline) { Text(stringResource(R.string.expenses_title)) }
-        OutlinedButton(onClick = onShare, border = outline) {
-            Text(stringResource(R.string.share_whatsapp), color = LocalStatusColors.current.paid)
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically),
+            modifier = Modifier.fillMaxSize().padding(horizontal = 4.dp),
+        ) {
+            icon()
+            Text(
+                label,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = accent ?: MaterialTheme.colorScheme.primary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
     }
 }

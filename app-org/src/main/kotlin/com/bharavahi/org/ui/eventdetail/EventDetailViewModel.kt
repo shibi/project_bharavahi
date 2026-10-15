@@ -21,6 +21,7 @@ import com.bharavahi.core.domain.usecase.event.SetEventStatusUseCase
 import com.bharavahi.core.domain.usecase.event.UpdateEventRolesUseCase
 import com.bharavahi.core.domain.usecase.expense.ObserveExpensesUseCase
 import com.bharavahi.core.domain.rules.EventPdfReport
+import com.bharavahi.core.domain.rules.MemberDuesRules
 import com.bharavahi.core.domain.usecase.payment.BuildEventPdfReportUseCase
 import com.bharavahi.core.domain.usecase.payment.BuildWhatsAppMessageUseCase
 import com.bharavahi.core.domain.usecase.schedule.ObserveSchedulesUseCase
@@ -48,6 +49,8 @@ data class EventDetailUiState(
     val schedules: List<Schedule> = emptyList(),
     val members: List<EventMember> = emptyList(),
     val expenses: List<Expense> = emptyList(),
+    /** What active members still owe on dues already due (BR-5), for the overview card. */
+    val pendingDues: Long = 0L,
     val error: Throwable? = null,
     /** A failed action (status change, role, remove); shown as a message, the screen stays. */
     val actionError: Throwable? = null,
@@ -103,6 +106,7 @@ class EventDetailViewModel @Inject constructor(
                 schedules = schedules,
                 members = members,
                 expenses = expenses,
+                pendingDues = MemberDuesRules.computeAll(members.filter { it.active }, schedules, LocalDate.now()).sumOf { it.pending },
                 error = if (event == null) DomainException.NotFound() else null,
             )
         }.catch { emit(EventDetailUiState(loading = false, error = it)) }
