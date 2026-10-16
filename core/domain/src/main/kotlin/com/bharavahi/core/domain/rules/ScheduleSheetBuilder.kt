@@ -5,7 +5,8 @@ import com.bharavahi.core.domain.model.EventMember
 import com.bharavahi.core.domain.model.Schedule
 import com.bharavahi.core.domain.model.SheetCell
 import com.bharavahi.core.domain.model.SheetTab
-import java.time.format.TextStyle
+import java.time.YearMonth
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 /**
@@ -13,7 +14,7 @@ import java.util.Locale
  *
  * ```
  * EVENT · SCHEDULE                                 (merged title)
- * NO | NAME  | DUE1 - JUNE | DUE2 - JULY | TOTAL
+ * NO | NAME  | JUNE        | JULY        | TOTAL
  * 1  | AJITH | 500         |             | =SUM
  * …
  *    |       | =SUM        | =SUM        | =SUM   (totals)
@@ -56,13 +57,18 @@ object ScheduleSheetBuilder {
         return SheetTab(schedule.id, schedule.name.trim().ifEmpty { "Schedule" }.take(MAX_TITLE), listOf(title, header) + memberRows + listOf(totals))
     }
 
-    /** "DUE1 - JUNE" per due, sorted by index; the year is added when the dues span more than one. Also used by the PDF (ORG-34). */
-    fun dueHeaders(dues: List<Due>): List<String> {
+    /**
+     * One header per due, sorted by index: the month ("JUNE"), or day and month ("5 JUN") when two dues fall
+     * in one month, then the year after [yearSeparator] when the dues span more than one. The PDF (ORG-34)
+     * passes a newline to put the year on its own line.
+     */
+    fun dueHeaders(dues: List<Due>, yearSeparator: String = " "): List<String> {
         val sorted = dues.sortedBy { it.index }
         val spansYears = sorted.map { it.dueDate.year }.distinct().size > 1
+        val sharesMonth = sorted.map { YearMonth.from(it.dueDate) }.distinct().size < sorted.size
         return sorted.map { due ->
-            val month = due.dueDate.month.getDisplayName(TextStyle.FULL, Locale.ENGLISH).uppercase()
-            "DUE${due.index + 1} - $month" + if (spansYears) " ${due.dueDate.year}" else ""
+            val date = (if (sharesMonth) DAY_MONTH else FULL_MONTH).format(due.dueDate).uppercase()
+            if (spansYears) "$date$yearSeparator${due.dueDate.year}" else date
         }
     }
 
@@ -97,4 +103,6 @@ object ScheduleSheetBuilder {
     }
 
     private const val MAX_TITLE = 100
+    private val FULL_MONTH = DateTimeFormatter.ofPattern("MMMM", Locale.ENGLISH)
+    private val DAY_MONTH = DateTimeFormatter.ofPattern("d MMM", Locale.ENGLISH)
 }

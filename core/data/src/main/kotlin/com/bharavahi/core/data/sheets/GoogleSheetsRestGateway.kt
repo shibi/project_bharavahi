@@ -293,7 +293,7 @@ internal class GoogleSheetsRestGateway @Inject constructor() : SpreadsheetGatewa
         const val TIMEOUT_MILLIS = 30_000
         const val NO_WIDTH = 45 // fits a 3-digit number
         const val NAME_WIDTH = 240
-        const val AMOUNT_WIDTH = 160 // fits "DUE12 - SEPTEMBER 2026" in bold
+        const val AMOUNT_WIDTH = 120 // fits "SEPTEMBER 2026" in bold
 
         fun rgb(r: Int, g: Int, b: Int) = buildJsonObject {
             put("red", r / 255.0)

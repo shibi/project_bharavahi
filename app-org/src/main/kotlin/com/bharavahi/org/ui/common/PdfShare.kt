@@ -117,13 +117,13 @@ private class EventPdfWriter(private val report: EventPdfReport) {
         drawRow(table.totals, widths, ROW_HEIGHT, totalsPaint)
     }
 
-    /** Header labels like "DUE1 - JUNE" go on two lines so narrow due columns still fit them. */
+    /** Due headers come as up to two lines ("SEPTEMBER\n2026") so they fit the narrow due columns. */
     private fun drawHeader(header: List<String>, widths: List<Float>) {
         fillRow(HEADER_HEIGHT, HEADER_BLUE)
         var x = MARGIN
         header.forEachIndexed { i, label ->
             canvas.drawRect(x, y, x + widths[i], y + HEADER_HEIGHT, border)
-            val lines = label.split(" - ", limit = 2)
+            val lines = label.split("\n", limit = 2)
             val lineHeight = headerPaint.textSize + 2f
             val top = y + (HEADER_HEIGHT - lines.size * lineHeight) / 2
             lines.forEachIndexed { l, line ->

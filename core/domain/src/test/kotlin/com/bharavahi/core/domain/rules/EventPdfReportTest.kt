@@ -28,11 +28,36 @@ class EventPdfReportTest {
     private val report = EventPdfReportBuilder.build("St. Mary's", event, listOf(schedule), members, LocalDate.parse("2026-10-15"))
 
     @Test
-    fun `header and title match the sheet tab`() {
+    fun `title matches the sheet tab and due headers drop the DUE prefix`() {
         val table = report.tables.single()
         val tab = ScheduleSheetBuilder.build(event.name, schedule, members)
         assertThat(table.title).isEqualTo((tab.rows[0][0] as SheetCell.Text).value)
-        assertThat(table.header).isEqualTo(tab.rows[1].map { (it as SheetCell.Text).value })
+        assertThat(table.header).containsExactly("NO", "NAME", "JUNE", "JULY", "AUGUST", "TOTAL").inOrder()
+    }
+
+    @Test
+    fun `due headers put the year on a second line when dues span years`() {
+        val spanning = (0 until 2).map { i -> Due(i, "", LocalDate.parse("2026-12-01").plusMonths(i.toLong()), 1) }
+        val wide = schedule.copy(dues = spanning, numberOfDues = spanning.size)
+        val header = EventPdfReportBuilder.build("", event, listOf(wide), members, first).tables.single().header
+        assertThat(header.subList(2, 4)).containsExactly("DECEMBER\n2026", "JANUARY\n2027").inOrder()
+    }
+
+    @Test
+    fun `many dues are split into even parts with the total on the last`() {
+        val many = (0 until 25).map { i -> Due(i, "", first.plusMonths(i.toLong()), 1_000) }
+        val wide = schedule.copy(dues = many, numberOfDues = many.size)
+        val member = eventMember("a", paidByDue = mapOf("s1_0" to 1_000L, "s1_24" to 2_000L)).copy(name = "Ajith")
+        val tables = EventPdfReportBuilder.build("", event, listOf(wide), listOf(member), first).tables
+
+        assertThat(tables.map { it.header.size - 2 }).containsExactly(9, 9, 8).inOrder() // 9 + 9 + 7 dues, last adds TOTAL
+        assertThat(tables[0].title).endsWith("· DUES 1–9 OF 25")
+        assertThat(tables[2].title).endsWith("· DUES 19–25 OF 25")
+        assertThat(tables[0].rows.single().take(3)).containsExactly("1", "AJITH", "₹10").inOrder()
+        assertThat(tables[0].header.last()).isNotEqualTo("TOTAL")
+        assertThat(tables[2].rows.single().takeLast(2)).containsExactly("₹20", "₹30").inOrder()
+        assertThat(tables[2].totals.last()).isEqualTo("₹30")
+        tables.forEach { assertThat(it.rows.single().size).isEqualTo(it.header.size) }
     }
 
     @Test

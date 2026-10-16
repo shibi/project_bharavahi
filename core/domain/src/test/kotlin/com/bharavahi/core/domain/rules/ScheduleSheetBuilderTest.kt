@@ -29,7 +29,7 @@ class ScheduleSheetBuilderTest {
 
         assertThat(rows[0]).containsExactly(SheetCell.Text("CHRISTMAS CELEBRATION 2026 · MONTHLY"))
         assertThat(rows[1].map { (it as SheetCell.Text).value })
-            .containsExactly("NO", "NAME", "DUE1 - JUNE", "DUE2 - JULY", "DUE3 - AUGUST", "TOTAL").inOrder()
+            .containsExactly("NO", "NAME", "JUNE", "JULY", "AUGUST", "TOTAL").inOrder()
         // Sorted by name, numbered from 1, disabled members kept, other schedules' payments ignored.
         assertThat(rows[2]).containsExactly(
             SheetCell.Number(1), SheetCell.Text("AJITH"),
@@ -50,8 +50,14 @@ class ScheduleSheetBuilderTest {
     @Test
     fun `year is added when a schedule crosses into the next year`() {
         val header = ScheduleSheetBuilder.build("Onam", schedule(start = "2026-12-01"), members).rows[1]
-        assertThat(header[2]).isEqualTo(SheetCell.Text("DUE1 - DECEMBER 2026"))
-        assertThat(header[4]).isEqualTo(SheetCell.Text("DUE3 - FEBRUARY 2027"))
+        assertThat(header[2]).isEqualTo(SheetCell.Text("DECEMBER 2026"))
+        assertThat(header[4]).isEqualTo(SheetCell.Text("FEBRUARY 2027"))
+    }
+
+    @Test
+    fun `day is shown when two dues share a month`() {
+        val weekly = (0 until 3).map { i -> Due(i, "", LocalDate.parse("2026-06-20").plusDays(i * 7L), 1) }
+        assertThat(ScheduleSheetBuilder.dueHeaders(weekly)).containsExactly("20 JUN", "27 JUN", "4 JUL").inOrder()
     }
 
     @Test
