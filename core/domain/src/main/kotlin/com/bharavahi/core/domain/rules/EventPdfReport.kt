@@ -3,6 +3,7 @@ package com.bharavahi.core.domain.rules
 import com.bharavahi.core.domain.model.Event
 import com.bharavahi.core.domain.model.EventMember
 import com.bharavahi.core.domain.model.Schedule
+import com.bharavahi.core.domain.usecase.event.ObserveExpectedTotalUseCase
 import com.bharavahi.core.domain.validation.Money
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -39,6 +40,7 @@ object EventPdfReportBuilder {
         subtitle = listOf(communityName.trim(), today.format(DATE)).filter { it.isNotEmpty() }.joinToString(" · "),
         summary = listOf(
             "Opening balance" to Money.format(event.openingBalance),
+            "Schedule total" to Money.format(ObserveExpectedTotalUseCase.expectedTotal(members, schedules)),
             "Collected" to Money.format(event.totalCollected),
             "Expenses" to Money.format(event.totalExpenses),
             "Balance" to Money.format(event.balance),

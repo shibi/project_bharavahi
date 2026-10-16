@@ -77,6 +77,10 @@ class EventPdfReportTest {
     @Test
     fun `summary and file name`() {
         assertThat(report.subtitle).isEqualTo("St. Mary's · 15 Oct 2026")
+        assertThat(report.summary.map { it.first })
+            .containsExactly("Opening balance", "Schedule total", "Collected", "Expenses", "Balance").inOrder()
+        // Two active members × ₹1,500; the disabled member owes nothing.
+        assertThat(report.summary[1].second).isEqualTo("₹3,000")
         assertThat(report.summary.last()).isEqualTo("Balance" to "₹1,000")
         assertThat(report.fileName).isEqualTo("Christmas-2026-dues.pdf")
     }
